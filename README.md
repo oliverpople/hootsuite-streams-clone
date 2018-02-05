@@ -4,7 +4,7 @@ A simplified clone of hootsuite's dashboard streams.
 
 ### Quality of Service Matrix
 
-![QoS Matrix](hootsuite_stream_QoS.jpg)
+![QoS Matrix](hootsuite_stream_QoSV2.jpg)
 
 ### User Stories
 
