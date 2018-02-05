@@ -1,6 +1,6 @@
 # Hootsuite-streams-clone
 
-A simplified clone of hootsuite's dashboard streams.
+A simplified clone of Hootsuite's dashboard streams.
 
 ### Quality of Service Matrix
 
@@ -46,3 +46,9 @@ I want to the option to filter my stream by reweets
 ```
 
 V3:
+
+```
+As a User
+So I can view my Instagram post 
+I want to connect to my Instagram feed 
+```
