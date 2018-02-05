@@ -62,3 +62,6 @@ As a User
 So I can view my shared Instagram posts only
 I want to the option to filter my Instagram stream by 'Shared posts'  
 ```
+
+### Initial MVP Wireframe Outlining React.j Components
+![MVP wireframe](mvp_react_component_ui.jpg)
