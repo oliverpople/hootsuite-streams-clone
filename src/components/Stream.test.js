@@ -9,4 +9,8 @@ describe('Stream', () => {
     expect(stream.toMatchSnapshot);
   });
 
+  it('initialises the `state` with an empty list of streamItems', () => {
+    expect(stream.state().streamItems).toEqual([]);
+  });
+
 });
