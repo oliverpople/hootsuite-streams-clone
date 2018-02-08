@@ -22,6 +22,12 @@ addStream = () => {
 
 }
 
+removeStream = id => {
+  const streams = this.state.streams.filter(stream => stream.id !== id);
+
+  this.setState({ streams });
+}
+
   render() {
     return (
       <div>
@@ -30,7 +36,11 @@ addStream = () => {
           {
             this.state.streams.map(stream => {
               return (
-                <Stream key={stream.id} />
+                <Stream
+                key={stream.id}
+                stream={stream}
+                removeStream={this.Stream}
+                />
               )
             })
           }

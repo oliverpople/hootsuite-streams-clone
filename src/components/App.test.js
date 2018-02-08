@@ -37,6 +37,17 @@ const id = 1;
       expect(app.find('Stream').exists()).toBe(true);
     });
 
+    describe('when removing added Stream', () => {
+      beforeEach(() => {
+        app.instance().removeStream(id);
+      });
+
+      it('removes the Stream from `state`', () => {
+        expect(app.state().streams).toEqual([]);
+      });
+
+    });
+
   });
 
 });
