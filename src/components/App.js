@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Button } from 'react-bootstrap';
+import Stream from './Stream';
 
 class App extends Component {
   constructor() {
@@ -29,7 +30,7 @@ addStream = () => {
           {
             this.state.streams.map(stream => {
               return (
-                <div key={stream.id}></div>
+                <Stream key={stream.id} />
               )
             })
           }

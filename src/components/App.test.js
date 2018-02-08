@@ -32,6 +32,10 @@ const app = shallow(<App />);
       expect(app.find('.stream-list').children().length).toEqual(1);
     });
 
+    it('adds a new Stream component', () => {
+      expect(app.find('Stream').exists()).toBe(true);
+    });
+
   });
 
 });
