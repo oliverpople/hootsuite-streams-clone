@@ -16,7 +16,6 @@ const id = 1;
 
 
   describe('when clicking `add-stream` button', () => {
-
     beforeEach(() => {
       app.find('.btn-add').simulate('click');
     });
@@ -45,9 +44,6 @@ const id = 1;
       it('removes the Stream from `state`', () => {
         expect(app.state().streams).toEqual([]);
       });
-
     });
-
   });
-
 });

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Button } from 'react-bootstrap';
 
 class Stream extends Component {
   constructor() {
@@ -9,7 +10,14 @@ class Stream extends Component {
 
   render() {
     return (
-      <div></div>
+      <div>
+        <Button
+          className='btn-remove'
+          onClick={() => this.props.removeStream(this.props.stream.id)}
+        >
+        Remove Stream
+        </ Button>
+      </div>
     )
   }
 
