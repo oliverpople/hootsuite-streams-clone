@@ -24,11 +24,11 @@ const app = shallow(<App />);
       app.setState({ streams: [] });
     });
 
-    it('adds a new stream to `state` when clicking `add stream` button', () => {
+    it('adds a new stream to `state`', () => {
       expect(app.state().streams).toEqual([{ id: 1 }]);
     });
 
-    it('adds a new stream to the rendered list when clicking the `add stream` button', () => {
+    it('adds a new stream to the rendered list', () => {
       expect(app.find('.stream-list').children().length).toEqual(1);
     });
 
