@@ -4,6 +4,7 @@ import App from './App';
 
 describe('App', () => {
 const app = shallow(<App />);
+const id = 1;
 
   it('renders correctly', () => {
     expect(app).toMatchSnapshot();
@@ -25,7 +26,7 @@ const app = shallow(<App />);
     });
 
     it('adds a new stream to `state`', () => {
-      expect(app.state().streams).toEqual([{ id: 1 }]);
+      expect(app.state().streams).toEqual([{ id }]);
     });
 
     it('adds a new stream to the rendered list', () => {
