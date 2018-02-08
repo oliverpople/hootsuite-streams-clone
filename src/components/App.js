@@ -25,6 +25,15 @@ addStream = () => {
     return (
       <div>
         <h2>Hootsuite Streams</h2>
+        <div className='stream-list'>
+          {
+            this.state.streams.map(stream => {
+              return (
+                <div key={stream.id}></div>
+              )
+            })
+          }
+        </div>
         <Button className='btn-add' onClick={this.addStream}>Add Stream</Button>
       </div>
     )

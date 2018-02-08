@@ -21,6 +21,11 @@ ShallowWrapper {
         <h2>
           Hootsuite Streams
 </h2>,
+        <div
+          className="stream-list"
+>
+          
+</div>,
         <Button
           active={false}
           block={false}
@@ -46,6 +51,18 @@ ShallowWrapper {
         "ref": null,
         "rendered": "Hootsuite Streams",
         "type": "h2",
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [],
+          "className": "stream-list",
+        },
+        "ref": null,
+        "rendered": Array [],
+        "type": "div",
       },
       Object {
         "instance": null,
@@ -78,6 +95,11 @@ ShallowWrapper {
           <h2>
             Hootsuite Streams
 </h2>,
+          <div
+            className="stream-list"
+>
+            
+</div>,
           <Button
             active={false}
             block={false}
@@ -103,6 +125,18 @@ ShallowWrapper {
           "ref": null,
           "rendered": "Hootsuite Streams",
           "type": "h2",
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [],
+            "className": "stream-list",
+          },
+          "ref": null,
+          "rendered": Array [],
+          "type": "div",
         },
         Object {
           "instance": null,
