@@ -11,3 +11,9 @@ it('renders correctly', () => {
 it('initialises the `state` with an empty list of streams', () => {
   expect(app.state().streams).toEqual([]);
 })
+
+it('adds a new stream to `state` when clicking `add stream` button', () => {
+  app.find('.btn-add').simulate('click');
+
+  expect(app.state().streams).toEqual([{ id: 1 }]);
+});
