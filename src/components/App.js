@@ -1,9 +1,18 @@
 import React, { Component } from 'react';
 
 class App extends Component {
+  constructor() {
+      super();
+
+      this.state = { streams: [] };
+  }
+
+
   render() {
     return (
-      <div></div>
+      <div>
+        <h2>Hootsuite Streams</h2>
+      </div>
     )
   }
 }

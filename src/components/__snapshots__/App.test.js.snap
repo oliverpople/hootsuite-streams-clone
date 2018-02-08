@@ -16,9 +16,23 @@ ShallowWrapper {
     "instance": null,
     "key": undefined,
     "nodeType": "host",
-    "props": Object {},
+    "props": Object {
+      "children": <h2>
+        Hootsuite Streams
+</h2>,
+    },
     "ref": null,
-    "rendered": null,
+    "rendered": Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": "Hootsuite Streams",
+      },
+      "ref": null,
+      "rendered": "Hootsuite Streams",
+      "type": "h2",
+    },
     "type": "div",
   },
   Symbol(enzyme.__nodes__): Array [
@@ -26,9 +40,23 @@ ShallowWrapper {
       "instance": null,
       "key": undefined,
       "nodeType": "host",
-      "props": Object {},
+      "props": Object {
+        "children": <h2>
+          Hootsuite Streams
+</h2>,
+      },
       "ref": null,
-      "rendered": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": "Hootsuite Streams",
+        },
+        "ref": null,
+        "rendered": "Hootsuite Streams",
+        "type": "h2",
+      },
       "type": "div",
     },
   ],
