@@ -9,4 +9,8 @@ describe('StreamItem', () => {
     expect(streamItem.toMatchSnapshot);
   });
 
+  it('initializes with a media URL and message in `state`', () => {
+    expect(streamItem.state()).toEqual({ mediaURL: '', message: '' });
+  });
+
 });
