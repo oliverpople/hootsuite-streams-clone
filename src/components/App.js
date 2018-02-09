@@ -39,7 +39,7 @@ removeStream = id => {
                 <Stream
                 key={stream.id}
                 stream={stream}
-                removeStream={this.Stream}
+                removeStream={this.removeStream}
                 />
               )
             })
