@@ -29,7 +29,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 /*enabling cors with headers, (allow snode data to load from different port)*/
 app.use('*', function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3001/");
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
   res.header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();

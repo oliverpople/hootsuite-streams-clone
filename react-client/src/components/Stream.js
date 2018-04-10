@@ -6,23 +6,22 @@ class Stream extends Component {
     super();
 
     this.state = { streamItems: [] }
+
+    this.componentDidMount = this.componentDidMount.bind(this)
   }
 
   componentDidMount() {
     fetch('/tweets')
       .then(res => res.json())
       .then(tweets => this.setState({ streamItems: tweets }));
+      console.log(this.state)
   }
-
-    // .then(tweets => this.setState({
-//   streamItems: [...this.state.streamItems, tweets]
-// }));
 
   render() {
     return (
       <div>
       <h1>Tweets</h1>
-          <div className='stream-items'>
+        <div className='stream-items'>
             {this.state.streamItems.map(tweet =>
               <div key={tweet.id}>{tweet.text}</div>
             )}

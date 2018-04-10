@@ -22,5 +22,5 @@
     "react-dom": "^16.2.0",
     "react-test-renderer": "^16.2.0"
   },
-  "proxy": "http://localhost:3001"
+  "proxy": "http://localhost:3000"
 }
