@@ -6,11 +6,26 @@ class Stream extends Component {
     super();
 
     this.state = { streamItems: [] }
+
+    this.componentDidMount = this.componentDidMount.bind(this)
+  }
+
+  componentDidMount() {
+    fetch('/tweets')
+      .then(res => res.json())
+      .then(tweets => this.setState({ streamItems: tweets }));
+      console.log(this.state)
   }
 
   render() {
     return (
       <div>
+      <h1>Tweets</h1>
+        <div className='stream-items'>
+            {this.state.streamItems.map(tweet =>
+              <div key={tweet.id}>{tweet.text}</div>
+            )}
+        </div>
         <Button
           className='btn-remove'
           onClick={() => this.props.removeStream(this.props.stream.id)}

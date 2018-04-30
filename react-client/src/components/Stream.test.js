@@ -1,6 +1,12 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { shallow, mount } from 'enzyme';
 import Stream from './Stream';
+import sinon from 'sinon';
+import { waitForState } from 'enzyme-async-helpers';
+
+const fs = require("fs");
+const mockData = fs.readFileSync('../express-backend/mock_data/tweet.json');
+
 
 describe('Stream', () => {
   const mockRemove = jest.fn();
@@ -8,12 +14,29 @@ describe('Stream', () => {
   const props = { stream: { id }, removeStream: mockRemove };
   const stream = shallow(<Stream {...props} />);
 
-  it('renders properly', () => {
-    expect(stream.toMatchSnapshot);
-  });
+  describe('When Stream initialises', () => {
+    it('renders properly', () => {
+      expect(stream.toMatchSnapshot);
+    });
 
-  it('initialises the `state` with an empty list of streamItems', () => {
-    expect(stream.state().streamItems).toEqual([]);
+    it('initialises the `state` with an empty list of streamItems', () => {
+      expect(stream.state().streamItems).toEqual([]);
+    });
+
+    it('Stream fetches streamItems on mount and sets it to state', async () => {
+
+      global.fetch = jest.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          mockData
+        })
+      }))
+
+      const wrapper = mount(<Stream />);
+      await waitForState(wrapper, state => state.streamItems.length > 0)
+         expect(wrapper.instance().state.streamItems.length).toBe([mockData].length)
+    })
   });
 
   describe('when clicking the `Remove Stream button`', () => {

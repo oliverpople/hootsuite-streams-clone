@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "enzyme-async-helpers": "^0.9.0",
     "react": "^16.2.0",
     "react-bootstrap": "^0.32.1",
-    "react-scripts": "1.1.0"
+    "react-scripts": "1.1.0",
+    "sinon": "^4.3.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -19,5 +21,6 @@
     "jest-cli": "^20.0.4",
     "react-dom": "^16.2.0",
     "react-test-renderer": "^16.2.0"
-  }
+  },
+  "proxy": "http://localhost:3000"
 }
