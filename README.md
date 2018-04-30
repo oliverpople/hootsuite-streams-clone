@@ -5,17 +5,19 @@ A simplified clone of Hootsuite's dashboard streams.
 # Getting Started
 
 First checkout this repo, then install and run the server with the following commands:
-
+```
 > git clone git@github.com:oliverpople/hootsuite-streams-clone.git
 > cd hootsuite-streams-clone/express-backend
 > npm install
 > npm start
+```
 
 Then in a new tab checkout the same repo and run the front-end like so:
-
+```
 > cd hootsuite-streams-clone/react-client
 > npm install
 > npm start
+```
 
 Note: At this point you may be asked to select an alternative port to the back-end, in which case select 'Y' / 'Yes'.
 
