@@ -2,15 +2,16 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import StreamItem from './StreamItem';
 
+const fs = require("fs");
+const mockData = fs.readFileSync('../express-backend/mock_data/tweet.json');
+
+
 describe('StreamItem', () => {
-  const streamItem = shallow(<StreamItem />);
+  const props = {streamItemsFromParent: mockData}
+  const streamItem = shallow(<StreamItem {...props} />);
 
   it('renders properly', () => {
     expect(streamItem.toMatchSnapshot);
-  });
-
-  it('initializes with a media URL and message in `state`', () => {
-    expect(streamItem.state()).toEqual({ mediaURL: '', message: '' });
   });
 
 });

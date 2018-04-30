@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Button } from 'react-bootstrap';
+import StreamItem from './StreamItem';
 
 class Stream extends Component {
   constructor() {
@@ -22,9 +23,7 @@ class Stream extends Component {
       <div>
       <h1>Tweets</h1>
         <div className='stream-items'>
-            {this.state.streamItems.map(tweet =>
-              <div key={tweet.id}>{tweet.text}</div>
-            )}
+          <StreamItem streamItemsFromParent={this.state.streamItems} />;
         </div>
         <Button
           className='btn-remove'

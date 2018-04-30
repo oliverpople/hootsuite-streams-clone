@@ -1,15 +1,12 @@
 import React, { Component } from 'react';
 
 class StreamItem extends Component {
-  constructor() {
-    super(0);
-
-    this.state = { mediaURL: '', message: ''}
-  }
 
   render() {
       return (
-        <div></div>
+        <ul>
+          {this.props.streamItemsFromParent.map(tweet => <li key={tweet.id}>{tweet.text}</li>)}
+        </ul>
       )
   }
 }
