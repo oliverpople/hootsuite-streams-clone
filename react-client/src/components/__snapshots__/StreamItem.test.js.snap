@@ -1,0 +1,356 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`StreamItem renders properly 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <StreamItem
+    streamItemsFromParent={
+        Array [
+            Object {
+              "contributors": null,
+              "coordinates": null,
+              "created_at": "Thu Apr 06 15:28:43 +0000 2017",
+              "entities": Object {
+                "hashtags": Array [],
+                "symbols": Array [],
+                "urls": Array [
+                  Object {
+                    "display_url": "cards.twitter.com/cards/18ce53wg…",
+                    "expanded_url": "https://cards.twitter.com/cards/18ce53wgo4h/3xo1c",
+                    "indices": Array [
+                      94,
+                      117,
+                    ],
+                    "url": "https://t.co/XweGngmxlP",
+                  },
+                ],
+                "user_mentions": Array [
+                  Object {
+                    "id": 2244994945,
+                    "id_str": "2244994945",
+                    "indices": Array [
+                      3,
+                      14,
+                    ],
+                    "name": "TwitterDev",
+                    "screen_name": "TwitterDev",
+                  },
+                ],
+              },
+              "favorite_count": 0,
+              "favorited": false,
+              "geo": null,
+              "id": 850007368138018800,
+              "id_str": "850007368138018817",
+              "in_reply_to_screen_name": null,
+              "in_reply_to_status_id": null,
+              "in_reply_to_status_id_str": null,
+              "in_reply_to_user_id": null,
+              "in_reply_to_user_id_str": null,
+              "is_quote_status": false,
+              "lang": "en",
+              "place": null,
+              "possibly_sensitive": false,
+              "retweet_count": 284,
+              "retweeted": false,
+              "retweeted_status": Object {
+                "contributors": null,
+                "coordinates": null,
+                "created_at": "Thu Apr 06 15:24:15 +0000 2017",
+                "entities": Object {
+                  "hashtags": Array [],
+                  "symbols": Array [],
+                  "urls": Array [
+                    Object {
+                      "display_url": "cards.twitter.com/cards/18ce53wg…",
+                      "expanded_url": "https://cards.twitter.com/cards/18ce53wgo4h/3xo1c",
+                      "indices": Array [
+                        78,
+                        101,
+                      ],
+                      "url": "https://t.co/XweGngmxlP",
+                    },
+                  ],
+                  "user_mentions": Array [],
+                },
+                "favorite_count": 399,
+                "favorited": false,
+                "geo": null,
+                "id": 850006245121695700,
+                "id_str": "850006245121695744",
+                "in_reply_to_screen_name": null,
+                "in_reply_to_status_id": null,
+                "in_reply_to_status_id_str": null,
+                "in_reply_to_user_id": null,
+                "in_reply_to_user_id_str": null,
+                "is_quote_status": false,
+                "lang": "en",
+                "place": null,
+                "possibly_sensitive": false,
+                "retweet_count": 284,
+                "retweeted": false,
+                "source": "<a href='http://twitter.com' rel='nofollow'>Twitter Web Client</a>",
+                "text": "1/ Today we’re sharing our vision for the future of the Twitter API platform!nhttps://t.co/XweGngmxlP",
+                "truncated": false,
+                "user": Object {
+                  "contributors_enabled": false,
+                  "created_at": "Sat Dec 14 04:35:55 +0000 2013",
+                  "default_profile": false,
+                  "default_profile_image": false,
+                  "description": "Your official source for Twitter Platform news, updates & events. Need technical help? Visit https://t.co/mGHnxZCxkt ⌨️  #TapIntoTwitter",
+                  "entities": Object {
+                    "description": Object {
+                      "urls": Array [
+                        Object {
+                          "display_url": "twittercommunity.com",
+                          "expanded_url": "https://twittercommunity.com/",
+                          "indices": Array [
+                            93,
+                            116,
+                          ],
+                          "url": "https://t.co/mGHnxZCxkt",
+                        },
+                      ],
+                    },
+                    "url": Object {
+                      "urls": Array [
+                        Object {
+                          "display_url": "dev.twitter.com",
+                          "expanded_url": "https://dev.twitter.com/",
+                          "indices": Array [
+                            0,
+                            23,
+                          ],
+                          "url": "https://t.co/66w26cua1O",
+                        },
+                      ],
+                    },
+                  },
+                  "favourites_count": 2098,
+                  "follow_request_sent": false,
+                  "followers_count": 465425,
+                  "following": true,
+                  "friends_count": 1523,
+                  "geo_enabled": true,
+                  "has_extended_profile": false,
+                  "id": 2244994945,
+                  "id_str": "2244994945",
+                  "is_translation_enabled": false,
+                  "is_translator": false,
+                  "lang": "en",
+                  "listed_count": 1168,
+                  "location": "Internet",
+                  "name": "TwitterDev",
+                  "notifications": false,
+                  "profile_background_color": "FFFFFF",
+                  "profile_background_image_url": "http://abs.twimg.com/images/themes/theme1/bg.png",
+                  "profile_background_image_url_https": "https://abs.twimg.com/images/themes/theme1/bg.png",
+                  "profile_background_tile": false,
+                  "profile_banner_url": "https://pbs.twimg.com/profile_banners/2244994945/1396995246",
+                  "profile_image_url": "http://pbs.twimg.com/profile_images/530814764687949824/npQQVkq8_normal.png",
+                  "profile_image_url_https": "https://pbs.twimg.com/profile_images/530814764687949824/npQQVkq8_normal.png",
+                  "profile_link_color": "0084B4",
+                  "profile_sidebar_border_color": "FFFFFF",
+                  "profile_sidebar_fill_color": "DDEEF6",
+                  "profile_text_color": "333333",
+                  "profile_use_background_image": false,
+                  "protected": false,
+                  "screen_name": "TwitterDev",
+                  "statuses_count": 3031,
+                  "time_zone": "Pacific Time (US & Canada)",
+                  "translator_type": "regular",
+                  "url": "https://t.co/66w26cua1O",
+                  "utc_offset": -25200,
+                  "verified": true,
+                },
+              },
+              "source": "<a href='http://twitter.com' rel='nofollow'>Twitter Web Client</a>",
+              "text": "RT @TwitterDev: 1/ Today we’re sharing our vision for the future of the Twitter API platform!nhttps://t.co/XweGngmxlP",
+              "truncated": false,
+              "user": Object {
+                "contributors_enabled": false,
+                "created_at": "Wed May 23 06:01:13 +0000 2007",
+                "default_profile": false,
+                "default_profile_image": false,
+                "description": "The Real Twitter API. I tweet about API changes, service issues and happily answer questions about Twitter and our API. Don't get an answer? It's on my website.",
+                "entities": Object {
+                  "description": Object {
+                    "urls": Array [],
+                  },
+                  "url": Object {
+                    "urls": Array [
+                      Object {
+                        "display_url": "dev.twitter.com",
+                        "expanded_url": "https://dev.twitter.com",
+                        "indices": Array [
+                          0,
+                          22,
+                        ],
+                        "url": "http://t.co/78pYTvWfJd",
+                      },
+                    ],
+                  },
+                },
+                "favourites_count": 26,
+                "follow_request_sent": false,
+                "followers_count": 6172353,
+                "following": true,
+                "friends_count": 46,
+                "geo_enabled": true,
+                "has_extended_profile": false,
+                "id": 6253282,
+                "id_str": "6253282",
+                "is_translation_enabled": false,
+                "is_translator": false,
+                "lang": "en",
+                "listed_count": 13091,
+                "location": "San Francisco, CA",
+                "name": "Twitter API",
+                "notifications": false,
+                "profile_background_color": "C0DEED",
+                "profile_background_image_url": "http://pbs.twimg.com/profile_background_images/656927849/miyt9dpjz77sc0w3d4vj.png",
+                "profile_background_image_url_https": "https://pbs.twimg.com/profile_background_images/656927849/miyt9dpjz77sc0w3d4vj.png",
+                "profile_background_tile": true,
+                "profile_banner_url": "https://pbs.twimg.com/profile_banners/6253282/1431474710",
+                "profile_image_url": "http://pbs.twimg.com/profile_images/2284174872/7df3h38zabcvjylnyfe3_normal.png",
+                "profile_image_url_https": "https://pbs.twimg.com/profile_images/2284174872/7df3h38zabcvjylnyfe3_normal.png",
+                "profile_link_color": "0084B4",
+                "profile_sidebar_border_color": "C0DEED",
+                "profile_sidebar_fill_color": "DDEEF6",
+                "profile_text_color": "333333",
+                "profile_use_background_image": true,
+                "protected": false,
+                "screen_name": "twitterapi",
+                "statuses_count": 3583,
+                "time_zone": "Pacific Time (US & Canada)",
+                "translator_type": "regular",
+                "url": "http://t.co/78pYTvWfJd",
+                "utc_offset": -25200,
+                "verified": true,
+              },
+            },
+          ]
+    }
+/>,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <li>
+          <img
+                    alt="Profile"
+                    src="http://pbs.twimg.com/profile_images/530814764687949824/npQQVkq8_normal.png"
+          />
+          RT @TwitterDev: 1/ Today we’re sharing our vision for the future of the Twitter API platform!nhttps://t.co/XweGngmxlP
+</li>,
+      ],
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": "850007368138018800",
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            <img
+              alt="Profile"
+              src="http://pbs.twimg.com/profile_images/530814764687949824/npQQVkq8_normal.png"
+/>,
+            "RT @TwitterDev: 1/ Today we’re sharing our vision for the future of the Twitter API platform!nhttps://t.co/XweGngmxlP",
+          ],
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "alt": "Profile",
+              "src": "http://pbs.twimg.com/profile_images/530814764687949824/npQQVkq8_normal.png",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": "img",
+          },
+          "RT @TwitterDev: 1/ Today we’re sharing our vision for the future of the Twitter API platform!nhttps://t.co/XweGngmxlP",
+        ],
+        "type": "li",
+      },
+    ],
+    "type": "ul",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <li>
+            <img
+                        alt="Profile"
+                        src="http://pbs.twimg.com/profile_images/530814764687949824/npQQVkq8_normal.png"
+            />
+            RT @TwitterDev: 1/ Today we’re sharing our vision for the future of the Twitter API platform!nhttps://t.co/XweGngmxlP
+</li>,
+        ],
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": "850007368138018800",
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              <img
+                alt="Profile"
+                src="http://pbs.twimg.com/profile_images/530814764687949824/npQQVkq8_normal.png"
+/>,
+              "RT @TwitterDev: 1/ Today we’re sharing our vision for the future of the Twitter API platform!nhttps://t.co/XweGngmxlP",
+            ],
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "alt": "Profile",
+                "src": "http://pbs.twimg.com/profile_images/530814764687949824/npQQVkq8_normal.png",
+              },
+              "ref": null,
+              "rendered": null,
+              "type": "img",
+            },
+            "RT @TwitterDev: 1/ Today we’re sharing our vision for the future of the Twitter API platform!nhttps://t.co/XweGngmxlP",
+          ],
+          "type": "li",
+        },
+      ],
+      "type": "ul",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+    "disableLifecycleMethods": true,
+  },
+}
+`;
