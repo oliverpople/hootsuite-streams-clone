@@ -9,6 +9,9 @@ const has = require('has');
 const Components = require('../util/Components');
 const variableUtil = require('../util/variable');
 const annotations = require('../util/annotations');
+const astUtil = require('../util/ast');
+const propsUtil = require('../util/props');
+const docsUrl = require('../util/docsUrl');
 
 // ------------------------------------------------------------------------------
 // Rule Definition
@@ -18,7 +21,8 @@ module.exports = {
   meta: {
     docs: {
       description: 'Enforce all defaultProps are defined and not "required" in propTypes.',
-      category: 'Best Practices'
+      category: 'Best Practices',
+      url: docsUrl('default-props-match-prop-types')
     },
 
     schema: [{
@@ -37,72 +41,9 @@ module.exports = {
     const configuration = context.options[0] || {};
     const allowRequiredDefaults = configuration.allowRequiredDefaults || false;
     const propWrapperFunctions = new Set(context.settings.propWrapperFunctions || []);
-
-    /**
-     * Get properties name
-     * @param {Object} node - Property.
-     * @returns {String} Property name.
-     */
-    function getPropertyName(node) {
-      if (node.key || ['MethodDefinition', 'Property'].indexOf(node.type) !== -1) {
-        return node.key.name;
-      } else if (node.type === 'MemberExpression') {
-        return node.property.name;
-      // Special case for class properties
-      // (babel-eslint@5 does not expose property name so we have to rely on tokens)
-      } else if (node.type === 'ClassProperty') {
-        const tokens = context.getFirstTokens(node, 2);
-        return tokens[1] && tokens[1].type === 'Identifier' ? tokens[1].value : tokens[0].value;
-      }
-      return '';
-    }
-
-    /**
-     * Checks if the Identifier node passed in looks like a propTypes declaration.
-     * @param   {ASTNode}  node The node to check. Must be an Identifier node.
-     * @returns {Boolean}       `true` if the node is a propTypes declaration, `false` if not
-     */
-    function isPropTypesDeclaration(node) {
-      return getPropertyName(node) === 'propTypes';
-    }
-
-    /**
-     * Checks if the Identifier node passed in looks like a defaultProps declaration.
-     * @param   {ASTNode}  node The node to check. Must be an Identifier node.
-     * @returns {Boolean}       `true` if the node is a defaultProps declaration, `false` if not
-     */
-    function isDefaultPropsDeclaration(node) {
-      const propName = getPropertyName(node);
-      return (propName === 'defaultProps' || propName === 'getDefaultProps');
-    }
-
-    /**
-     * Checks if the PropTypes MemberExpression node passed in declares a required propType.
-     * @param   {ASTNode} propTypeExpression node to check. Must be a `PropTypes` MemberExpression.
-     * @returns {Boolean}                    `true` if this PropType is required, `false` if not.
-     */
-    function isRequiredPropType(propTypeExpression) {
-      return propTypeExpression.type === 'MemberExpression' && propTypeExpression.property.name === 'isRequired';
-    }
-
-    /**
-     * Find a variable by name in the current scope.
-     * @param  {string} name Name of the variable to look for.
-     * @returns {ASTNode|null} Return null if the variable could not be found, ASTNode otherwise.
-     */
-    function findVariableByName(name) {
-      const variable = variableUtil.variablesInScope(context).find(item => item.name === name);
-
-      if (!variable || !variable.defs[0] || !variable.defs[0].node) {
-        return null;
-      }
-
-      if (variable.defs[0].node.type === 'TypeAlias') {
-        return variable.defs[0].node.right;
-      }
-
-      return variable.defs[0].node.init;
-    }
+    // Used to track the type annotations in scope.
+    // Necessary because babel's scopes do not track type annotations.
+    let stack = null;
 
     /**
      * Try to resolve the node passed in to a variable in the current scope. If the node passed in is not
@@ -112,7 +53,7 @@ module.exports = {
      */
     function resolveNodeValue(node) {
       if (node.type === 'Identifier') {
-        return findVariableByName(node.name);
+        return variableUtil.findVariableByName(context, node.name);
       }
       if (
         node.type === 'CallExpression' &&
@@ -125,6 +66,22 @@ module.exports = {
     }
 
     /**
+     * Helper for accessing the current scope in the stack.
+     * @param {string} key The name of the identifier to access. If omitted, returns the full scope.
+     * @param {ASTNode} value If provided sets the new value for the identifier.
+     * @returns {Object|ASTNode} Either the whole scope or the ASTNode associated with the given identifier.
+     */
+    function typeScope(key, value) {
+      if (arguments.length === 0) {
+        return stack[stack.length - 1];
+      } else if (arguments.length === 1) {
+        return stack[stack.length - 1][key];
+      }
+      stack[stack.length - 1][key] = value;
+      return value;
+    }
+
+    /**
      * Tries to find the definition of a GenericTypeAnnotation in the current scope.
      * @param  {ASTNode}      node The node GenericTypeAnnotation node to resolve.
      * @return {ASTNode|null}      Return null if definition cannot be found, ASTNode otherwise.
@@ -134,7 +91,7 @@ module.exports = {
         return null;
       }
 
-      return findVariableByName(node.id.name);
+      return variableUtil.findVariableByName(context, node.id.name) || typeScope(node.id.name);
     }
 
     function resolveUnionTypeAnnotation(node) {
@@ -154,11 +111,11 @@ module.exports = {
      * @returns {Object[]}        Array of PropType object representations, to be consumed by `addPropTypesToComponent`.
      */
     function getPropTypesFromObjectExpression(objectExpression) {
-      const props = objectExpression.properties.filter(property => property.type !== 'ExperimentalSpreadProperty');
+      const props = objectExpression.properties.filter(property => property.type !== 'ExperimentalSpreadProperty' && property.type !== 'SpreadElement');
 
       return props.map(property => ({
         name: property.key.name,
-        isRequired: isRequiredPropType(property.value),
+        isRequired: propsUtil.isRequiredPropType(property.value),
         node: property
       }));
     }
@@ -174,7 +131,11 @@ module.exports = {
         annotation = resolveGenericTypeAnnotation(type);
 
         if (annotation && annotation.id) {
-          annotation = findVariableByName(annotation.id.name);
+          annotation = variableUtil.findVariableByName(context, annotation.id.name);
+        }
+
+        if (!annotation || !annotation.properties) {
+          return properties;
         }
 
         return properties.concat(annotation.properties);
@@ -197,7 +158,7 @@ module.exports = {
             properties = getPropertiesFromIntersectionTypeAnnotationNode(annotation);
           } else {
             if (annotation && annotation.id) {
-              annotation = findVariableByName(annotation.id.name);
+              annotation = variableUtil.findVariableByName(context, annotation.id.name);
             }
 
             properties = annotation ? (annotation.properties || []) : [];
@@ -248,7 +209,7 @@ module.exports = {
      *                                     from this ObjectExpression can't be resolved.
      */
     function getDefaultPropsFromObjectExpression(objectExpression) {
-      const hasSpread = objectExpression.properties.find(property => property.type === 'ExperimentalSpreadProperty');
+      const hasSpread = objectExpression.properties.find(property => property.type === 'ExperimentalSpreadProperty' || property.type === 'SpreadElement');
 
       if (hasSpread) {
         return 'unresolved';
@@ -341,7 +302,7 @@ module.exports = {
     }
 
     function isPropTypeAnnotation(node) {
-      return (getPropertyName(node) === 'props' && !!node.typeAnnotation);
+      return (astUtil.getPropertyName(node) === 'props' && !!node.typeAnnotation);
     }
 
     function propFromName(propTypes, name) {
@@ -391,8 +352,8 @@ module.exports = {
 
     return {
       MemberExpression: function(node) {
-        const isPropType = isPropTypesDeclaration(node);
-        const isDefaultProp = isDefaultPropsDeclaration(node);
+        const isPropType = propsUtil.isPropTypesDeclaration(node);
+        const isDefaultProp = propsUtil.isDefaultPropsDeclaration(node);
 
         if (!isPropType && !isDefaultProp) {
           return;
@@ -442,7 +403,7 @@ module.exports = {
           if (isPropType) {
             addPropTypesToComponent(component, [{
               name: node.parent.property.name,
-              isRequired: isRequiredPropType(node.parent.parent.right),
+              isRequired: propsUtil.isRequiredPropType(node.parent.parent.right),
               node: node.parent.parent
             }]);
           } else {
@@ -477,8 +438,8 @@ module.exports = {
           return;
         }
 
-        const isPropType = isPropTypesDeclaration(node);
-        const isDefaultProp = isDefaultPropsDeclaration(node);
+        const isPropType = propsUtil.isPropTypesDeclaration(node);
+        const isDefaultProp = propsUtil.isDefaultPropsDeclaration(node);
 
         if (!isPropType && !isDefaultProp) {
           return;
@@ -533,7 +494,7 @@ module.exports = {
           return;
         }
 
-        const propName = getPropertyName(node);
+        const propName = astUtil.getPropertyName(node);
         const isPropType = propName === 'propTypes';
         const isDefaultProp = propName === 'defaultProps' || propName === 'getDefaultProps';
 
@@ -582,12 +543,12 @@ module.exports = {
 
         // Search for the proptypes declaration
         node.properties.forEach(property => {
-          if (property.type === 'ExperimentalSpreadProperty') {
+          if (property.type === 'ExperimentalSpreadProperty' || property.type === 'SpreadElement') {
             return;
           }
 
-          const isPropType = isPropTypesDeclaration(property);
-          const isDefaultProp = isDefaultPropsDeclaration(property);
+          const isPropType = propsUtil.isPropTypesDeclaration(property);
+          const isDefaultProp = propsUtil.isDefaultPropsDeclaration(property);
 
           if (!isPropType && !isDefaultProp) {
             return;
@@ -609,12 +570,29 @@ module.exports = {
         });
       },
 
+      TypeAlias: function(node) {
+        typeScope(node.id.name, node.right);
+      },
+
+      Program: function() {
+        stack = [{}];
+      },
+
+      BlockStatement: function () {
+        stack.push(Object.create(typeScope()));
+      },
+
+      'BlockStatement:exit': function () {
+        stack.pop();
+      },
+
       // Check for type annotations in stateless components
       FunctionDeclaration: handleStatelessComponent,
       ArrowFunctionExpression: handleStatelessComponent,
       FunctionExpression: handleStatelessComponent,
 
       'Program:exit': function() {
+        stack = null;
         const list = components.list();
 
         for (const component in list) {

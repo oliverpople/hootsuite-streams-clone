@@ -11,6 +11,7 @@
 'use strict';
 
 const has = require('has');
+const docsUrl = require('../util/docsUrl');
 
 // ------------------------------------------------------------------------------
 // Rule Definition
@@ -27,7 +28,8 @@ module.exports = {
     docs: {
       description: 'Enforce or disallow spaces inside of curly braces in JSX attributes',
       category: 'Stylistic Issues',
-      recommended: false
+      recommended: false,
+      url: docsUrl('jsx-curly-spacing')
     },
     fixable: 'code',
 
@@ -148,7 +150,33 @@ module.exports = {
      * @returns {boolean} Whether or not there is a newline between the tokens.
      */
     function isMultiline(left, right) {
-      return left.loc.start.line !== right.loc.start.line;
+      return left.loc.end.line !== right.loc.start.line;
+    }
+
+    /**
+     * Trims text of whitespace between two ranges
+     * @param {Fixer} fixer - the eslint fixer object
+     * @param {Location} fromLoc - the start location
+     * @param {Location} toLoc - the end location
+     * @param {string} mode - either 'start' or 'end'
+     * @param {string=} spacing - a spacing value that will optionally add a space to the removed text
+     * @returns {Object|*|{range, text}}
+     */
+    function fixByTrimmingWhitespace(fixer, fromLoc, toLoc, mode, spacing) {
+      let replacementText = sourceCode.text.slice(fromLoc, toLoc);
+      if (mode === 'start') {
+        replacementText = replacementText.replace(/^\s+/gm, '');
+      } else {
+        replacementText = replacementText.replace(/\s+$/gm, '');
+      }
+      if (spacing === SPACING.always) {
+        if (mode === 'start') {
+          replacementText += ' ';
+        } else {
+          replacementText = ` ${replacementText}`;
+        }
+      }
+      return fixer.replaceTextRange([fromLoc, toLoc], replacementText);
     }
 
     /**
@@ -164,7 +192,7 @@ module.exports = {
         message: `There should be no newline after '${token.value}'`,
         fix: function(fixer) {
           const nextToken = sourceCode.getTokenAfter(token);
-          return fixer.replaceTextRange([token.range[1], nextToken.range[0]], spacing === SPACING.always ? ' ' : '');
+          return fixByTrimmingWhitespace(fixer, token.range[1], nextToken.range[0], 'start', spacing);
         }
       });
     }
@@ -182,7 +210,7 @@ module.exports = {
         message: `There should be no newline before '${token.value}'`,
         fix: function(fixer) {
           const previousToken = sourceCode.getTokenBefore(token);
-          return fixer.replaceTextRange([previousToken.range[1], token.range[0]], spacing === SPACING.always ? ' ' : '');
+          return fixByTrimmingWhitespace(fixer, previousToken.range[1], token.range[0], 'end', spacing);
         }
       });
     }
@@ -200,10 +228,23 @@ module.exports = {
         message: `There should be no space after '${token.value}'`,
         fix: function(fixer) {
           const nextToken = sourceCode.getTokenAfter(token);
-          const nextNode = sourceCode.getNodeByRangeIndex(nextToken.range[0]);
-          const leadingComments = sourceCode.getComments(nextNode).leading;
-          const rangeEndRef = leadingComments.length ? leadingComments[0] : nextToken;
-          return fixer.removeRange([token.range[1], rangeEndRef.range[0]]);
+          let nextComment;
+
+          // ESLint >=4.x
+          if (sourceCode.getCommentsAfter) {
+            nextComment = sourceCode.getCommentsAfter(token);
+          // ESLint 3.x
+          } else {
+            const potentialComment = sourceCode.getTokenAfter(token, {includeComments: true});
+            nextComment = nextToken === potentialComment ? [] : [potentialComment];
+          }
+
+          // Take comments into consideration to narrow the fix range to what is actually affected. (See #1414)
+          if (nextComment.length > 0) {
+            return fixByTrimmingWhitespace(fixer, token.range[1], Math.min(nextToken.range[0], nextComment[0].start), 'start');
+          }
+
+          return fixByTrimmingWhitespace(fixer, token.range[1], nextToken.range[0], 'start');
         }
       });
     }
@@ -221,10 +262,23 @@ module.exports = {
         message: `There should be no space before '${token.value}'`,
         fix: function(fixer) {
           const previousToken = sourceCode.getTokenBefore(token);
-          const previousNode = sourceCode.getNodeByRangeIndex(previousToken.range[0]);
-          const trailingComments = sourceCode.getComments(previousNode).trailing;
-          const rangeStartRef = trailingComments.length ? trailingComments[trailingComments.length - 1] : previousToken;
-          return fixer.removeRange([rangeStartRef.range[1], token.range[0]]);
+          let previousComment;
+
+          // ESLint >=4.x
+          if (sourceCode.getCommentsBefore) {
+            previousComment = sourceCode.getCommentsBefore(token);
+          // ESLint 3.x
+          } else {
+            const potentialComment = sourceCode.getTokenBefore(token, {includeComments: true});
+            previousComment = previousToken === potentialComment ? [] : [potentialComment];
+          }
+
+          // Take comments into consideration to narrow the fix range to what is actually affected. (See #1414)
+          if (previousComment.length > 0) {
+            return fixByTrimmingWhitespace(fixer, Math.max(previousToken.range[1], previousComment[0].end), token.range[0], 'end');
+          }
+
+          return fixByTrimmingWhitespace(fixer, previousToken.range[1], token.range[0], 'end');
         }
       });
     }

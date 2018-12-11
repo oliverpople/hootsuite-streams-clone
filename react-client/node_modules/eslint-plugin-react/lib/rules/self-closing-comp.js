@@ -4,16 +4,22 @@
  */
 'use strict';
 
+const docsUrl = require('../util/docsUrl');
+const jsxUtil = require('../util/jsx');
+
 // ------------------------------------------------------------------------------
 // Rule Definition
 // ------------------------------------------------------------------------------
+
+const optionDefaults = {component: true, html: true};
 
 module.exports = {
   meta: {
     docs: {
       description: 'Prevent extra closing tags for components without children',
       category: 'Stylistic Issues',
-      recommended: false
+      recommended: false,
+      url: docsUrl('self-closing-comp')
     },
     fixable: 'code',
 
@@ -21,11 +27,11 @@ module.exports = {
       type: 'object',
       properties: {
         component: {
-          default: true,
+          default: optionDefaults.component,
           type: 'boolean'
         },
         html: {
-          default: true,
+          default: optionDefaults.html,
           type: 'boolean'
         }
       },
@@ -34,20 +40,15 @@ module.exports = {
   },
 
   create: function(context) {
-    const tagConvention = /^[a-z]|\-/;
-    function isTagName(name) {
-      return tagConvention.test(name);
-    }
-
     function isComponent(node) {
-      return node.name && node.name.type === 'JSXIdentifier' && !isTagName(node.name.name);
+      return node.name && node.name.type === 'JSXIdentifier' && !jsxUtil.isDOMComponent(node);
     }
 
     function hasChildren(node) {
       const childrens = node.parent.children;
       if (
         !childrens.length ||
-        (childrens.length === 1 && childrens[0].type === 'Literal' && !childrens[0].value.replace(/(?!\xA0)\s/g, ''))
+        (childrens.length === 1 && (childrens[0].type === 'Literal' || childrens[0].type === 'JSXText') && !childrens[0].value.replace(/(?!\xA0)\s/g, ''))
       ) {
         return false;
       }
@@ -55,10 +56,10 @@ module.exports = {
     }
 
     function isShouldBeSelfClosed(node) {
-      const configuration = context.options[0] || {component: true, html: true};
+      const configuration = Object.assign({}, optionDefaults, context.options[0]);
       return (
         configuration.component && isComponent(node) ||
-        configuration.html && isTagName(node.name.name)
+        configuration.html && jsxUtil.isDOMComponent(node)
       ) && !node.selfClosing && !hasChildren(node);
     }
 
@@ -77,9 +78,9 @@ module.exports = {
           message: 'Empty components are self-closing',
           fix: function(fixer) {
             // Represents the last character of the JSXOpeningElement, the '>' character
-            const openingElementEnding = node.end - 1;
+            const openingElementEnding = node.range[1] - 1;
             // Represents the last character of the JSXClosingElement, the '>' character
-            const closingElementEnding = node.parent.closingElement.end;
+            const closingElementEnding = node.parent.closingElement.range[1];
 
             // Replace />.*<\/.*>/ with '/>'
             const range = [openingElementEnding, closingElementEnding];

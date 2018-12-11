@@ -4,6 +4,8 @@
  */
 'use strict';
 
+const docsUrl = require('../util/docsUrl');
+
 // ------------------------------------------------------------------------------
 // Constants
 // ------------------------------------------------------------------------------
@@ -13,12 +15,18 @@ const DEFAULTS = {
 };
 
 const UNKNOWN_MESSAGE = 'Unknown property \'{{name}}\' found, use \'{{standardName}}\' instead';
+const WRONG_TAG_MESSAGE = 'Invalid property \'{{name}}\' found on tag \'{{tagName}}\', but it is only allowed on: {{allowedTags}}';
 
 const DOM_ATTRIBUTE_NAMES = {
   'accept-charset': 'acceptCharset',
   class: 'className',
   for: 'htmlFor',
-  'http-equiv': 'httpEquiv'
+  'http-equiv': 'httpEquiv',
+  crossorigin: 'crossOrigin'
+};
+
+const ATTRIBUTE_TAGS_MAP = {
+  crossOrigin: ['script', 'img', 'video', 'audio', 'link']
 };
 
 const SVGDOM_ATTRIBUTE_NAMES = {
@@ -109,8 +117,8 @@ const SVGDOM_ATTRIBUTE_NAMES = {
 const DOM_PROPERTY_NAMES = [
   // Standard
   'acceptCharset', 'accessKey', 'allowFullScreen', 'allowTransparency', 'autoComplete', 'autoFocus', 'autoPlay',
-  'cellPadding', 'cellSpacing', 'charSet', 'classID', 'className', 'colSpan', 'contentEditable', 'contextMenu',
-  'crossOrigin', 'dateTime', 'encType', 'formAction', 'formEncType', 'formMethod', 'formNoValidate', 'formTarget',
+  'cellPadding', 'cellSpacing', 'classID', 'className', 'colSpan', 'contentEditable', 'contextMenu',
+  'dateTime', 'encType', 'formAction', 'formEncType', 'formMethod', 'formNoValidate', 'formTarget',
   'frameBorder', 'hrefLang', 'htmlFor', 'httpEquiv', 'inputMode', 'keyParams', 'keyType', 'marginHeight', 'marginWidth',
   'maxLength', 'mediaGroup', 'minLength', 'noValidate', 'onAnimationEnd', 'onAnimationIteration', 'onAnimationStart',
   'onBlur', 'onChange', 'onClick', 'onContextMenu', 'onCopy', 'onCompositionEnd', 'onCompositionStart',
@@ -148,6 +156,18 @@ function isTagName(node) {
 }
 
 /**
+ * Extracts the tag name for the JSXAttribute
+ * @param {Object} node - JSXAttribute being tested.
+ * @returns {String} tag name
+ */
+function getTagName(node) {
+  if (node && node.parent && node.parent.name && node.parent.name) {
+    return node.parent.name.name;
+  }
+  return null;
+}
+
+/**
  * Get the standard name of the attribute.
  * @param {String} name - Name of the attribute.
  * @returns {String} The standard name of the attribute.
@@ -176,7 +196,8 @@ module.exports = {
     docs: {
       description: 'Prevent usage of unknown DOM property',
       category: 'Possible Errors',
-      recommended: true
+      recommended: true,
+      url: docsUrl('no-unknown-property')
     },
     fixable: 'code',
 
@@ -206,8 +227,26 @@ module.exports = {
       JSXAttribute: function(node) {
         const ignoreNames = getIgnoreConfig();
         const name = sourceCode.getText(node.name);
+        if (ignoreNames.indexOf(name) >= 0) {
+          return;
+        }
+
+        const tagName = getTagName(node);
+        const allowedTags = ATTRIBUTE_TAGS_MAP[name];
+        if (tagName && allowedTags && /[^A-Z]/.test(tagName.charAt(0)) && allowedTags.indexOf(tagName) === -1) {
+          context.report({
+            node: node,
+            message: WRONG_TAG_MESSAGE,
+            data: {
+              name: name,
+              tagName: tagName,
+              allowedTags: allowedTags.join(', ')
+            }
+          });
+        }
+
         const standardName = getStandardName(name);
-        if (!isTagName(node) || !standardName || ignoreNames.indexOf(name) >= 0) {
+        if (!isTagName(node) || !standardName) {
           return;
         }
         context.report({

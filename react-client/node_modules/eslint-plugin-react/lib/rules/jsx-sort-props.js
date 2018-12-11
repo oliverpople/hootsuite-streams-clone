@@ -4,8 +4,9 @@
  */
 'use strict';
 
-const elementType = require('jsx-ast-utils/elementType');
 const propName = require('jsx-ast-utils/propName');
+const docsUrl = require('../util/docsUrl');
+const jsxUtil = require('../util/jsx');
 
 // ------------------------------------------------------------------------------
 // Rule Definition
@@ -13,20 +14,6 @@ const propName = require('jsx-ast-utils/propName');
 
 function isCallbackPropName(name) {
   return /^on[A-Z]/.test(name);
-}
-
-const COMPAT_TAG_REGEX = /^[a-z]|\-/;
-function isDOMComponent(node) {
-  let name = elementType(node);
-
-  // Get namespace if the type is JSXNamespacedName or JSXMemberExpression
-  if (name.indexOf(':') > -1) {
-    name = name.substring(0, name.indexOf(':'));
-  } else if (name.indexOf('.') > -1) {
-    name = name.substring(0, name.indexOf('.'));
-  }
-
-  return COMPAT_TAG_REGEX.test(name);
 }
 
 const RESERVED_PROPS_LIST = [
@@ -40,10 +27,20 @@ function isReservedPropName(name, list) {
   return list.indexOf(name) >= 0;
 }
 
-function alphabeticalCompare(a, b, ignoreCase) {
-  if (ignoreCase) {
+function propNameCompare(a, b, options) {
+  if (options.ignoreCase) {
     a = a.toLowerCase();
     b = b.toLowerCase();
+  }
+  if (options.reservedFirst) {
+    const aIsReserved = isReservedPropName(a, options.reservedList);
+    const bIsReserved = isReservedPropName(b, options.reservedList);
+    if ((aIsReserved && bIsReserved) || (!aIsReserved && !bIsReserved)) {
+      return a.localeCompare(b);
+    } else if (aIsReserved && !bIsReserved) {
+      return -1;
+    }
+    return 1;
   }
   return a.localeCompare(b);
 }
@@ -77,11 +74,12 @@ function getGroupsOfSortableAttributes(attributes) {
   return sortableAttributeGroups;
 }
 
-const generateFixerFunction = (node, context) => {
+const generateFixerFunction = (node, context, reservedList) => {
   const sourceCode = context.getSourceCode();
   const attributes = node.attributes.slice(0);
   const configuration = context.options[0] || {};
   const ignoreCase = configuration.ignoreCase || false;
+  const reservedFirst = configuration.reservedFirst || false;
 
   // Sort props according to the context. Only supports ignoreCase.
   // Since we cannot safely move JSXSpreadAttribute (due to potential variable overrides),
@@ -89,25 +87,36 @@ const generateFixerFunction = (node, context) => {
   const sortableAttributeGroups = getGroupsOfSortableAttributes(attributes);
   const sortedAttributeGroups = sortableAttributeGroups.slice(0).map(group =>
     group.slice(0).sort((a, b) =>
-      alphabeticalCompare(propName(a), propName(b), ignoreCase)
+      propNameCompare(propName(a), propName(b), {ignoreCase, reservedFirst, reservedList})
     )
   );
 
   return function(fixer) {
     const fixers = [];
+    let source = sourceCode.getText();
 
     // Replace each unsorted attribute with the sorted one.
     sortableAttributeGroups.forEach((sortableGroup, ii) => {
       sortableGroup.forEach((attr, jj) => {
         const sortedAttr = sortedAttributeGroups[ii][jj];
         const sortedAttrText = sourceCode.getText(sortedAttr);
-        fixers.push(
-          fixer.replaceTextRange([attr.start, attr.end], sortedAttrText)
-        );
+        fixers.push({
+          range: [attr.range[0], attr.range[1]],
+          text: sortedAttrText
+        });
       });
     });
 
-    return fixers;
+    fixers.sort((a, b) => a.range[0] < b.range[0]);
+
+    const rangeStart = fixers[fixers.length - 1].range[0];
+    const rangeEnd = fixers[0].range[1];
+
+    fixers.forEach(fix => {
+      source = `${source.substr(0, fix.range[0])}${fix.text}${source.substr(fix.range[1])}`;
+    });
+
+    return fixer.replaceTextRange([rangeStart, rangeEnd], source.substr(rangeStart, rangeEnd - rangeStart));
   };
 };
 
@@ -157,7 +166,8 @@ module.exports = {
     docs: {
       description: 'Enforce props alphabetical sorting',
       category: 'Stylistic Issues',
-      recommended: false
+      recommended: false,
+      url: docsUrl('jsx-sort-props')
     },
     fixable: 'code',
     schema: [{
@@ -205,7 +215,7 @@ module.exports = {
     return {
       JSXOpeningElement: function(node) {
         // `dangerouslySetInnerHTML` is only "reserved" on DOM components
-        if (reservedFirst && !isDOMComponent(node)) {
+        if (reservedFirst && !jsxUtil.isDOMComponent(node)) {
           reservedList = reservedList.filter(prop => prop !== 'dangerouslySetInnerHTML');
         }
 
@@ -235,25 +245,17 @@ module.exports = {
             const previousIsReserved = isReservedPropName(previousPropName, reservedList);
             const currentIsReserved = isReservedPropName(currentPropName, reservedList);
 
-            if (previousIsReserved && currentIsReserved) {
-              if (!noSortAlphabetically && currentPropName < previousPropName) {
-                context.report({
-                  node: decl,
-                  message: 'Props should be sorted alphabetically',
-                  fix: generateFixerFunction(node, context)
-                });
-                return memo;
-              }
+            if (previousIsReserved && !currentIsReserved) {
               return decl;
             }
             if (!previousIsReserved && currentIsReserved) {
               context.report({
                 node: decl,
-                message: 'Reserved props must be listed before all other props'
+                message: 'Reserved props must be listed before all other props',
+                fix: generateFixerFunction(node, context, reservedList)
               });
               return memo;
             }
-            return decl;
           }
 
           if (callbacksLast) {
@@ -301,7 +303,7 @@ module.exports = {
             context.report({
               node: decl,
               message: 'Props should be sorted alphabetically',
-              fix: generateFixerFunction(node, context)
+              fix: generateFixerFunction(node, context, reservedList)
             });
             return memo;
           }

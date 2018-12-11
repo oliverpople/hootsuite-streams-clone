@@ -6,13 +6,14 @@
 'use strict';
 
 const elementType = require('jsx-ast-utils/elementType');
+const docsUrl = require('../util/docsUrl');
+const jsxUtil = require('../util/jsx');
 
 // ------------------------------------------------------------------------------
 // Constants
 // ------------------------------------------------------------------------------
 
 const PASCAL_CASE_REGEX = /^([A-Z0-9]|[A-Z0-9]+[a-z0-9]+(?:[A-Z0-9]+[a-z0-9]*)*)$/;
-const COMPAT_TAG_REGEX = /^[a-z]|\-/;
 const ALL_CAPS_TAG_REGEX = /^[A-Z0-9]+$/;
 
 // ------------------------------------------------------------------------------
@@ -24,7 +25,8 @@ module.exports = {
     docs: {
       description: 'Enforce PascalCase for user-defined JSX components',
       category: 'Stylistic Issues',
-      recommended: false
+      recommended: false,
+      url: docsUrl('jsx-pascal-case')
     },
 
     schema: [{
@@ -58,7 +60,7 @@ module.exports = {
         }
 
         const isPascalCase = PASCAL_CASE_REGEX.test(name);
-        const isCompatTag = COMPAT_TAG_REGEX.test(name);
+        const isCompatTag = jsxUtil.isDOMComponent(node);
         const isAllowedAllCaps = allowAllCaps && ALL_CAPS_TAG_REGEX.test(name);
         const isIgnored = ignore.indexOf(name) !== -1;
 

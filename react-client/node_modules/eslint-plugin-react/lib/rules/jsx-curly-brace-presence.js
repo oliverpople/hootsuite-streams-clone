@@ -1,8 +1,11 @@
 /**
  * @fileoverview Enforce curly braces or disallow unnecessary curly brace in JSX
  * @author Jacky Ho
+ * @author Simon Lydell
  */
 'use strict';
+
+const docsUrl = require('../util/docsUrl');
 
 // ------------------------------------------------------------------------------
 // Constants
@@ -30,7 +33,8 @@ module.exports = {
         'Disallow unnecessary JSX expressions when literals alone are sufficient ' +
           'or enfore JSX expressions on literals in JSX children or attributes',
       category: 'Stylistic Issues',
-      recommended: false
+      recommended: false,
+      url: docsUrl('jsx-curly-brace-presence')
     },
     fixable: 'code',
 
@@ -40,8 +44,8 @@ module.exports = {
           {
             type: 'object',
             properties: {
-              props: {enum: OPTION_VALUES, default: OPTION_NEVER},
-              children: {enum: OPTION_VALUES, default: OPTION_NEVER}
+              props: {enum: OPTION_VALUES, default: DEFAULT_CONFIG.props},
+              children: {enum: OPTION_VALUES, default: DEFAULT_CONFIG.children}
             },
             additionalProperties: false
           },
@@ -59,18 +63,53 @@ module.exports = {
       {props: ruleOptions, children: ruleOptions} :
       Object.assign({}, DEFAULT_CONFIG, ruleOptions);
 
-    function containsBackslashForEscaping(rawStringValue) {
+    function containsLineTerminators(rawStringValue) {
+      return /[\n\r\u2028\u2029]/.test(rawStringValue);
+    }
+
+    function containsBackslash(rawStringValue) {
       return rawStringValue.includes('\\');
+    }
+
+    function containsHTMLEntity(rawStringValue) {
+      return /&[A-Za-z\d#]+;/.test(rawStringValue);
+    }
+
+    function containsDisallowedJSXTextChars(rawStringValue) {
+      return /[{<>}]/.test(rawStringValue);
+    }
+
+    function containsQuoteCharacters(value) {
+      return /['"]/.test(value);
     }
 
     function escapeDoubleQuotes(rawStringValue) {
       return rawStringValue.replace(/\\"/g, '"').replace(/"/g, '\\"');
     }
 
+    function escapeBackslashes(rawStringValue) {
+      return rawStringValue.replace(/\\/g, '\\\\');
+    }
+
+    function needToEscapeCharacterForJSX(raw) {
+      return (
+        containsBackslash(raw) ||
+        containsHTMLEntity(raw) ||
+        containsDisallowedJSXTextChars(raw)
+      );
+    }
+
+    function containsWhitespaceExpression(child) {
+      if (child.type === 'JSXExpressionContainer') {
+        const value = child.expression.value;
+        return value ? !(/\S/.test(value)) : false;
+      }
+      return false;
+    }
+
     /**
      * Report and fix an unnecessary curly brace violation on a node
      * @param {ASTNode} node - The AST node with an unnecessary JSX expression
-     * @param {String} text - The text to replace the unnecessary JSX expression
      */
     function reportUnnecessaryCurly(JSXExpressionNode) {
       context.report({
@@ -83,11 +122,10 @@ module.exports = {
 
           let textToReplace;
           if (parentType === 'JSXAttribute') {
-            textToReplace = `"${escapeDoubleQuotes(
-              expressionType === 'TemplateLiteral' ?
-                expression.quasis[0].value.raw :
-                expression.raw.substring(1, expression.raw.length - 1)
-            )}"`;
+            textToReplace = `"${expressionType === 'TemplateLiteral' ?
+              expression.quasis[0].value.raw :
+              expression.raw.substring(1, expression.raw.length - 1)
+            }"`;
           } else {
             textToReplace = expressionType === 'TemplateLiteral' ?
               expression.quasis[0].value.cooked : expression.value;
@@ -103,10 +141,20 @@ module.exports = {
         node: literalNode,
         message: 'Need to wrap this literal in a JSX expression.',
         fix: function(fixer) {
+          // If a HTML entity name is found, bail out because it can be fixed
+          // by either using the real character or the unicode equivalent.
+          // If it contains any line terminator character, bail out as well.
+          if (
+            containsHTMLEntity(literalNode.raw) ||
+            containsLineTerminators(literalNode.raw)
+          ) {
+            return null;
+          }
+
           const expression = literalNode.parent.type === 'JSXAttribute' ?
-            `{"${escapeDoubleQuotes(
+            `{"${escapeDoubleQuotes(escapeBackslashes(
               literalNode.raw.substring(1, literalNode.raw.length - 1)
-            )}"}` :
+            ))}"}` :
             `{${JSON.stringify(literalNode.value)}}`;
 
           return fixer.replaceText(literalNode, expression);
@@ -114,23 +162,30 @@ module.exports = {
       });
     }
 
+    // Bail out if there is any character that needs to be escaped in JSX
+    // because escaping decreases readiblity and the original code may be more
+    // readible anyway or intentional for other specific reasons
     function lintUnnecessaryCurly(JSXExpressionNode) {
       const expression = JSXExpressionNode.expression;
       const expressionType = expression.type;
       const parentType = JSXExpressionNode.parent.type;
 
       if (
-        expressionType === 'Literal' &&
-          typeof expression.value === 'string' && (
-          parentType === 'JSXAttribute' ||
-          !containsBackslashForEscaping(expression.raw))
+        (expressionType === 'Literal' || expressionType === 'JSXText') &&
+          typeof expression.value === 'string' &&
+          !needToEscapeCharacterForJSX(expression.raw) && (
+          parentType === 'JSXElement' ||
+          !containsQuoteCharacters(expression.value)
+        )
       ) {
         reportUnnecessaryCurly(JSXExpressionNode);
       } else if (
         expressionType === 'TemplateLiteral' &&
-          expression.expressions.length === 0 && (
-          parentType === 'JSXAttribute' ||
-          !containsBackslashForEscaping(expression.quasis[0].value.raw))
+          expression.expressions.length === 0 &&
+          !needToEscapeCharacterForJSX(expression.quasis[0].value.raw) && (
+          parentType === 'JSXElement' ||
+          !containsQuoteCharacters(expression.quasis[0].value.cooked)
+        )
       ) {
         reportUnnecessaryCurly(JSXExpressionNode);
       }
@@ -157,11 +212,27 @@ module.exports = {
         return false;
       }
 
+      if (
+        parent.children
+        && parent.children.length === 1
+        && containsWhitespaceExpression(parent.children[0])
+      ) {
+        return false;
+      }
+
       return areRuleConditionsSatisfied(parentType, config, OPTION_NEVER);
     }
 
-    function shouldCheckForMissingCurly(parentType, config) {
-      return areRuleConditionsSatisfied(parentType, config, OPTION_ALWAYS);
+    function shouldCheckForMissingCurly(parent, config) {
+      if (
+        parent.children
+        && parent.children.length === 1
+        && containsWhitespaceExpression(parent.children[0])
+      ) {
+        return false;
+      }
+
+      return areRuleConditionsSatisfied(parent.type, config, OPTION_ALWAYS);
     }
 
     // --------------------------------------------------------------------------
@@ -170,17 +241,13 @@ module.exports = {
 
     return {
       JSXExpressionContainer: node => {
-        const parent = node.parent;
-
-        if (shouldCheckForUnnecessaryCurly(parent, userConfig)) {
+        if (shouldCheckForUnnecessaryCurly(node.parent, userConfig)) {
           lintUnnecessaryCurly(node);
         }
       },
 
-      Literal: node => {
-        const parentType = node.parent.type;
-
-        if (shouldCheckForMissingCurly(parentType, userConfig)) {
+      'Literal, JSXText': node => {
+        if (shouldCheckForMissingCurly(node.parent, userConfig)) {
           reportMissingCurly(node);
         }
       }

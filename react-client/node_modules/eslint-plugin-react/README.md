@@ -21,7 +21,38 @@ $ npm install eslint-plugin-react --save-dev
 
 # Configuration
 
-Add `plugins` section and specify ESLint-plugin-React as a plugin.
+Use [our preset](#recommended) to get reasonable defaults:
+
+```json
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended"
+  ]
+```
+
+You should also specify settings that will be shared across all the plugin rules.
+
+```json5
+{
+  "settings": {
+    "react": {
+      "createClass": "createReactClass", // Regex for Component Factory to use,
+                                         // default to "createReactClass"
+      "pragma": "React",  // Pragma to use, default to "React"
+      "version": "15.0", // React version, default to the latest React stable release
+      "flowVersion": "0.53" // Flow version
+    },
+    "propWrapperFunctions": [ "forbidExtraProps" ] // The names of any functions used to wrap the
+                                                   // propTypes object, e.g. `forbidExtraProps`.
+                                                   // If this isn't set, any propTypes wrapped in
+                                                   // a function will be skipped.
+  }
+}
+```
+
+If you do not use a preset you will need to specify individual rules and add extra configuration.
+
+Add "react" to the plugins section.
 
 ```json
 {
@@ -31,35 +62,9 @@ Add `plugins` section and specify ESLint-plugin-React as a plugin.
 }
 ```
 
-You can also specify some settings that will be shared across all the plugin rules.
+Enable JSX support.
 
-```json5
-{
-  "settings": {
-    "react": {
-      "createClass": "createReactClass", // Regex for Component Factory to use, default to "createReactClass"
-      "pragma": "React",  // Pragma to use, default to "React"
-      "version": "15.0" // React version, default to the latest React stable release
-      "flowVersion": "0.53" // Flow version
-    },
-    "propWrapperFunctions": [ "forbidExtraProps" ] // The names of any functions used to wrap the propTypes object, such as `forbidExtraProps`. If this isn't set, any propTypes wrapped in a function will be skipped.
-  }
-}
-```
-
-If it is not already the case you must also configure `ESLint` to support JSX.
-
-With ESLint 1.x.x:
-
-```json
-{
-  "ecmaFeatures": {
-    "jsx": true
-  }
-}
-```
-
-With ESLint 2.x.x or 3.x.x:
+With ESLint 2+
 
 ```json
 {
@@ -71,7 +76,7 @@ With ESLint 2.x.x or 3.x.x:
 }
 ```
 
-Finally, enable all of the rules that you would like to use.  Use [our preset](#recommended) to get reasonable defaults quickly, and/or choose your own:
+Enable the rules that you would like to use.
 
 ```json
   "rules": {
@@ -83,17 +88,21 @@ Finally, enable all of the rules that you would like to use.  Use [our preset](#
 # List of supported rules
 
 * [react/boolean-prop-naming](docs/rules/boolean-prop-naming.md): Enforces consistent naming for boolean props
+* [react/button-has-type](docs/rules/button-has-type.md): Forbid "button" element without an explicit "type" attribute
 * [react/default-props-match-prop-types](docs/rules/default-props-match-prop-types.md): Prevent extraneous defaultProps on components
+* [react/destructuring-assignment](docs/rules/destructuring-assignment.md): Rule enforces consistent usage of destructuring assignment in component
 * [react/display-name](docs/rules/display-name.md): Prevent missing `displayName` in a React component definition
 * [react/forbid-component-props](docs/rules/forbid-component-props.md): Forbid certain props on Components
+* [react/forbid-dom-props](docs/rules/forbid-dom-props.md): Forbid certain props on DOM Nodes
 * [react/forbid-elements](docs/rules/forbid-elements.md): Forbid certain elements
 * [react/forbid-prop-types](docs/rules/forbid-prop-types.md): Forbid certain propTypes
 * [react/forbid-foreign-prop-types](docs/rules/forbid-foreign-prop-types.md): Forbid foreign propTypes
+* [react/no-access-state-in-setstate](docs/rules/no-access-state-in-setstate.md): Prevent using this.state inside this.setState
 * [react/no-array-index-key](docs/rules/no-array-index-key.md): Prevent using Array index in `key` props
 * [react/no-children-prop](docs/rules/no-children-prop.md): Prevent passing children as props
 * [react/no-danger](docs/rules/no-danger.md): Prevent usage of dangerous JSX properties
 * [react/no-danger-with-children](docs/rules/no-danger-with-children.md): Prevent problem with children and props.dangerouslySetInnerHTML
-* [react/no-deprecated](docs/rules/no-deprecated.md): Prevent usage of deprecated methods
+* [react/no-deprecated](docs/rules/no-deprecated.md): Prevent usage of deprecated methods, including component lifecyle methods
 * [react/no-did-mount-set-state](docs/rules/no-did-mount-set-state.md): Prevent usage of `setState` in `componentDidMount`
 * [react/no-did-update-set-state](docs/rules/no-did-update-set-state.md): Prevent usage of `setState` in `componentDidUpdate`
 * [react/no-direct-mutation-state](docs/rules/no-direct-mutation-state.md): Prevent direct mutation of `this.state`
@@ -105,9 +114,12 @@ Finally, enable all of the rules that you would like to use.  Use [our preset](#
 * [react/no-set-state](docs/rules/no-set-state.md): Prevent usage of `setState`
 * [react/no-typos](docs/rules/no-typos.md): Prevent common casing typos
 * [react/no-string-refs](docs/rules/no-string-refs.md): Prevent using string references in `ref` attribute.
+* [react/no-this-in-sfc](docs/rules/no-this-in-sfc.md): Prevent using `this` in stateless functional components
 * [react/no-unescaped-entities](docs/rules/no-unescaped-entities.md): Prevent invalid characters from appearing in markup
 * [react/no-unknown-property](docs/rules/no-unknown-property.md): Prevent usage of unknown DOM property (fixable)
+* [react/no-unsafe](docs/rules/no-unsafe.md): Prevent usage of `UNSAFE_` methods
 * [react/no-unused-prop-types](docs/rules/no-unused-prop-types.md): Prevent definitions of unused prop types
+* [react/no-unused-state](docs/rules/no-unused-state.md): Prevent definitions of unused state properties
 * [react/no-will-update-set-state](docs/rules/no-will-update-set-state.md): Prevent usage of `setState` in `componentWillUpdate`
 * [react/prefer-es6-class](docs/rules/prefer-es6-class.md): Enforce ES5 or ES6 class for React Components
 * [react/prefer-stateless-function](docs/rules/prefer-stateless-function.md): Enforce stateless React Components to be written as a pure function
@@ -125,6 +137,7 @@ Finally, enable all of the rules that you would like to use.  Use [our preset](#
 ## JSX-specific rules
 
 * [react/jsx-boolean-value](docs/rules/jsx-boolean-value.md): Enforce boolean attributes notation in JSX (fixable)
+* [react/jsx-child-element-spacing](docs/rules/jsx-child-element-spacing.md): Enforce or disallow spaces inside of curly braces in JSX attributes and expressions.
 * [react/jsx-closing-bracket-location](docs/rules/jsx-closing-bracket-location.md): Validate closing bracket location in JSX (fixable)
 * [react/jsx-closing-tag-location](docs/rules/jsx-closing-tag-location.md): Validate closing tag location in JSX (fixable)
 * [react/jsx-curly-spacing](docs/rules/jsx-curly-spacing.md): Enforce or disallow spaces inside of curly braces in JSX attributes and expressions (fixable)
@@ -135,6 +148,7 @@ Finally, enable all of the rules that you would like to use.  Use [our preset](#
 * [react/jsx-indent](docs/rules/jsx-indent.md): Validate JSX indentation (fixable)
 * [react/jsx-indent-props](docs/rules/jsx-indent-props.md): Validate props indentation in JSX (fixable)
 * [react/jsx-key](docs/rules/jsx-key.md): Validate JSX has key prop when in array or iterator
+* [react/jsx-max-depth](docs/rules/jsx-max-depth.md): Validate JSX maximum depth
 * [react/jsx-max-props-per-line](docs/rules/jsx-max-props-per-line.md): Limit maximum of props on a single line in JSX (fixable)
 * [react/jsx-no-bind](docs/rules/jsx-no-bind.md): Prevent usage of `.bind()` and arrow functions in JSX props
 * [react/jsx-no-comment-textnodes](docs/rules/jsx-no-comment-textnodes.md): Prevent comments from being inserted as text nodes
@@ -142,8 +156,11 @@ Finally, enable all of the rules that you would like to use.  Use [our preset](#
 * [react/jsx-no-literals](docs/rules/jsx-no-literals.md): Prevent usage of unwrapped JSX strings
 * [react/jsx-no-target-blank](docs/rules/jsx-no-target-blank.md): Prevent usage of unsafe `target='_blank'`
 * [react/jsx-no-undef](docs/rules/jsx-no-undef.md): Disallow undeclared variables in JSX
+* [react/jsx-one-expression-per-line](docs/rules/jsx-one-expression-per-line.md): Limit to one expression per line in JSX
 * [react/jsx-curly-brace-presence](docs/rules/jsx-curly-brace-presence.md): Enforce curly braces or disallow unnecessary curly braces in JSX
 * [react/jsx-pascal-case](docs/rules/jsx-pascal-case.md): Enforce PascalCase for user-defined JSX components
+* [react/jsx-props-no-multi-spaces](docs/rules/jsx-props-no-multi-spaces.md): Disallow multiple spaces between inline JSX props (fixable)
+* [react/jsx-sort-default-props](docs/rules/jsx-sort-default-props.md): Enforce default props alphabetical sorting
 * [react/jsx-sort-props](docs/rules/jsx-sort-props.md): Enforce props alphabetical sorting (fixable)
 * [react/jsx-space-before-closing](docs/rules/jsx-space-before-closing.md): Validate spacing before closing bracket in JSX (fixable)
 * [react/jsx-tag-spacing](docs/rules/jsx-tag-spacing.md): Validate whitespace in and around the JSX opening and closing brackets (fixable)
@@ -233,7 +250,7 @@ ESLint-plugin-React is licensed under the [MIT License](http://www.opensource.or
 [coverage-image]: https://img.shields.io/coveralls/yannickcr/eslint-plugin-react/master.svg
 
 [climate-url]: https://codeclimate.com/github/yannickcr/eslint-plugin-react
-[climate-image]: https://img.shields.io/codeclimate/github/yannickcr/eslint-plugin-react.svg
+[climate-image]: https://img.shields.io/codeclimate/maintainability/yannickcr/eslint-plugin-react.svg
 
 [status-url]: https://github.com/yannickcr/eslint-plugin-react/pulse
-[status-image]: https://img.shields.io/badge/status-maintained-brightgreen.svg
+[status-image]: https://img.shields.io/github/last-commit/yannickcr/eslint-plugin-react.svg

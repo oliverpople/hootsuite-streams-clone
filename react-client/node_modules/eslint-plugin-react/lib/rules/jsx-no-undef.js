@@ -5,15 +5,8 @@
 
 'use strict';
 
-/**
- * Checks if a node name match the JSX tag convention.
- * @param {String} name - Name of the node to check.
- * @returns {boolean} Whether or not the node name match the JSX tag convention.
- */
-const tagConvention = /^[a-z]|\-/;
-function isTagName(name) {
-  return tagConvention.test(name);
-}
+const docsUrl = require('../util/docsUrl');
+const jsxUtil = require('../util/jsx');
 
 // ------------------------------------------------------------------------------
 // Rule Definition
@@ -24,7 +17,8 @@ module.exports = {
     docs: {
       description: 'Disallow undeclared variables in JSX',
       category: 'Possible Errors',
-      recommended: true
+      recommended: true,
+      url: docsUrl('jsx-no-undef')
     },
     schema: [{
       type: 'object',
@@ -92,10 +86,10 @@ module.exports = {
       JSXOpeningElement: function(node) {
         switch (node.name.type) {
           case 'JSXIdentifier':
-            node = node.name;
-            if (isTagName(node.name)) {
+            if (jsxUtil.isDOMComponent(node)) {
               return;
             }
+            node = node.name;
             break;
           case 'JSXMemberExpression':
             node = node.name;

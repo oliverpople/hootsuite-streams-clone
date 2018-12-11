@@ -10,6 +10,7 @@
 'use strict';
 
 const Components = require('../util/Components');
+const docsUrl = require('../util/docsUrl');
 
 // Descend through all wrapping TypeCastExpressions and return the expression
 // that was cast.
@@ -63,7 +64,8 @@ module.exports = {
     docs: {
       description: 'Prevent definition of unused state fields',
       category: 'Best Practices',
-      recommended: false
+      recommended: false,
+      url: docsUrl('no-unused-state')
     },
     schema: []
   },
@@ -75,7 +77,7 @@ module.exports = {
     // JSX attributes), then this is again set to null.
     let classInfo = null;
 
-    // Returns true if the given node is possibly a reference to `this.state`.
+    // Returns true if the given node is possibly a reference to `this.state`, `prevState` or `nextState`.
     function isStateReference(node) {
       node = uncast(node);
 
@@ -89,7 +91,15 @@ module.exports = {
         classInfo.aliases &&
         classInfo.aliases.has(node.name);
 
-      return isDirectStateReference || isAliasedStateReference;
+      const isPrevStateReference =
+        node.type === 'Identifier' &&
+        node.name === 'prevState';
+
+      const isNextStateReference =
+        node.type === 'Identifier' &&
+        node.name === 'nextState';
+
+      return isDirectStateReference || isAliasedStateReference || isPrevStateReference || isNextStateReference;
     }
 
     // Takes an ObjectExpression node and adds all named Property nodes to the
@@ -126,7 +136,7 @@ module.exports = {
         if (prop.type === 'Property') {
           addUsedStateField(prop.key);
         } else if (
-          prop.type === 'ExperimentalRestProperty' &&
+          (prop.type === 'ExperimentalRestProperty' || prop.type === 'RestElement') &&
           classInfo.aliases
         ) {
           classInfo.aliases.add(getName(prop.argument));
@@ -237,6 +247,27 @@ module.exports = {
         ) {
           addStateFields(node.value);
         }
+
+        if (
+          !node.static &&
+          node.value &&
+          node.value.type === 'ArrowFunctionExpression'
+        ) {
+          // Create a new set for this.state aliases local to this method.
+          classInfo.aliases = new Set();
+        }
+      },
+
+      'ClassProperty:exit'(node) {
+        if (
+          classInfo &&
+          !node.static &&
+          node.value &&
+          node.value.type === 'ArrowFunctionExpression'
+        ) {
+          // Forget our set of local aliases.
+          classInfo.aliases = null;
+        }
       },
 
       MethodDefinition() {
@@ -331,6 +362,9 @@ module.exports = {
           }
           // Otherwise, record that we saw this property being accessed.
           addUsedStateField(node.property);
+        // If we see a `this.state` access in a CallExpression, give up.
+        } else if (isStateReference(node) && node.parent.type === 'CallExpression') {
+          classInfo = null;
         }
       },
 
@@ -340,7 +374,7 @@ module.exports = {
         }
       },
 
-      ExperimentalSpreadProperty(node) {
+      'ExperimentalSpreadProperty, SpreadElement'(node) {
         if (classInfo && isStateReference(node.argument)) {
           classInfo = null;
         }

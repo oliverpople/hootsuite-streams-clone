@@ -4,6 +4,8 @@
  */
 'use strict';
 
+const docsUrl = require('../util/docsUrl');
+
 // ------------------------------------------------------------------------------
 // Rule Definition
 // ------------------------------------------------------------------------------
@@ -18,7 +20,8 @@ module.exports = {
     docs: {
       description: 'Detect unescaped HTML entities, which might represent malformed tags',
       category: 'Possible Errors',
-      recommended: true
+      recommended: true,
+      url: docsUrl('no-unescaped-entities')
     },
     schema: [{
       type: 'object',
@@ -68,8 +71,8 @@ module.exports = {
     }
 
     return {
-      Literal: function(node) {
-        if (node.type === 'Literal' && node.parent.type === 'JSXElement') {
+      'Literal, JSXText': function(node) {
+        if (node.parent.type === 'JSXElement') {
           reportInvalidEntity(node);
         }
       }

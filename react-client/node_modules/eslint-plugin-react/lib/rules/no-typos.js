@@ -4,6 +4,7 @@
 'use strict';
 
 const Components = require('../util/Components');
+const docsUrl = require('../util/docsUrl');
 
 // ------------------------------------------------------------------------------
 // Rule Definition
@@ -11,12 +12,18 @@ const Components = require('../util/Components');
 
 const STATIC_CLASS_PROPERTIES = ['propTypes', 'contextTypes', 'childContextTypes', 'defaultProps'];
 const LIFECYCLE_METHODS = [
+  'getDerivedStateFromProps',
   'componentWillMount',
+  'UNSAFE_componentWillMount',
   'componentDidMount',
   'componentWillReceiveProps',
+  'UNSAFE_componentWillReceiveProps',
   'shouldComponentUpdate',
   'componentWillUpdate',
+  'UNSAFE_componentWillUpdate',
+  'getSnapshotBeforeUpdate',
   'componentDidUpdate',
+  'componentDidCatch',
   'componentWillUnmount',
   'render'
 ];
@@ -28,13 +35,17 @@ module.exports = {
     docs: {
       description: 'Prevent common typos',
       category: 'Stylistic Issues',
-      recommended: false
+      recommended: false,
+      url: docsUrl('no-typos')
     },
     schema: []
   },
 
   create: Components.detect((context, components, utils) => {
-    function checkValidPropTypeQualfier(node) {
+    let propTypesPackageName = null;
+    let reactPackageName = null;
+
+    function checkValidPropTypeQualifier(node) {
       if (node.name !== 'isRequired') {
         context.report({
           node: node,
@@ -52,37 +63,70 @@ module.exports = {
       }
     }
 
+    function isPropTypesPackage(node) {
+      return (
+        node.type === 'Identifier' &&
+        node.name === propTypesPackageName
+      ) || (
+        node.type === 'MemberExpression' &&
+        node.property.name === 'PropTypes' &&
+        node.object.name === reactPackageName
+      );
+    }
+
     /* eslint-disable no-use-before-define */
-    function checkValidProp(node) {
-      if (node && node.type === 'MemberExpression' && node.object.type === 'MemberExpression') {
-        checkValidPropType(node.object.property);
-        checkValidPropTypeQualfier(node.property);
-      } else if (node && node.type === 'MemberExpression' && node.object.type === 'Identifier') {
-        checkValidPropType(node.property);
-      } else if (node && node.type === 'CallExpression') {
-        const callee = node.callee;
-        if (callee.type === 'MemberExpression' && callee.property.name === 'shape') {
-          checkValidPropObject(node.arguments[0]);
-        } else if (callee.type === 'MemberExpression' && callee.property.name === 'oneOfType') {
-          const args = node.arguments[0];
-          if (args && args.type === 'ArrayExpression') {
-            args.elements.forEach(el => checkValidProp(el));
-          }
+
+    function checkValidCallExpression(node) {
+      const callee = node.callee;
+      if (callee.type === 'MemberExpression' && callee.property.name === 'shape') {
+        checkValidPropObject(node.arguments[0]);
+      } else if (callee.type === 'MemberExpression' && callee.property.name === 'oneOfType') {
+        const args = node.arguments[0];
+        if (args && args.type === 'ArrayExpression') {
+          args.elements.forEach(el => {
+            checkValidProp(el);
+          });
         }
       }
     }
 
+    function checkValidProp(node) {
+      if ((!propTypesPackageName && !reactPackageName) || !node) {
+        return;
+      }
+
+      if (node.type === 'MemberExpression') {
+        if (
+          node.object.type === 'MemberExpression' &&
+          isPropTypesPackage(node.object.object)
+        ) { // PropTypes.myProp.isRequired
+          checkValidPropType(node.object.property);
+          checkValidPropTypeQualifier(node.property);
+        } else if (
+          isPropTypesPackage(node.object) &&
+          node.property.name !== 'isRequired'
+        ) { // PropTypes.myProp
+          checkValidPropType(node.property);
+        } else if (node.object.type === 'CallExpression') {
+          checkValidPropTypeQualifier(node.property);
+          checkValidCallExpression(node.object);
+        }
+      } else if (node.type === 'CallExpression') {
+        checkValidCallExpression(node);
+      }
+    }
+
+    /* eslint-enable no-use-before-define */
+
     function checkValidPropObject (node) {
-      if (node.type === 'ObjectExpression') {
+      if (node && node.type === 'ObjectExpression') {
         node.properties.forEach(prop => checkValidProp(prop.value));
       }
     }
-    /* eslint-enable no-use-before-define */
 
     function reportErrorIfClassPropertyCasingTypo(node, propertyName) {
       if (propertyName === 'propTypes' || propertyName === 'contextTypes' || propertyName === 'childContextTypes') {
-        const propsNode = node && node.parent && node.parent.type === 'AssignmentExpression' && node.parent.right;
-        checkValidPropObject(propsNode);
+        checkValidPropObject(node);
       }
       STATIC_CLASS_PROPERTIES.forEach(CLASS_PROP => {
         if (propertyName && CLASS_PROP.toLowerCase() === propertyName.toLowerCase() && CLASS_PROP !== propertyName) {
@@ -106,6 +150,24 @@ module.exports = {
     }
 
     return {
+      ImportDeclaration: function(node) {
+        if (node.source && node.source.value === 'prop-types') { // import PropType from "prop-types"
+          propTypesPackageName = node.specifiers[0].local.name;
+        } else if (node.source && node.source.value === 'react') { // import { PropTypes } from "react"
+          if (node.specifiers.length > 0) {
+            reactPackageName = node.specifiers[0].local.name; // guard against accidental anonymous `import "react"`
+          }
+          if (node.specifiers.length >= 1) {
+            const propTypesSpecifier = node.specifiers.find(specifier => (
+              specifier.imported && specifier.imported.name === 'PropTypes'
+            ));
+            if (propTypesSpecifier) {
+              propTypesPackageName = propTypesSpecifier.local.name;
+            }
+          }
+        }
+      },
+
       ClassProperty: function(node) {
         if (!node.static || !utils.isES6Component(node.parent.parent)) {
           return;
@@ -113,7 +175,7 @@ module.exports = {
 
         const tokens = context.getFirstTokens(node, 2);
         const propertyName = tokens[1].value;
-        reportErrorIfClassPropertyCasingTypo(node, propertyName);
+        reportErrorIfClassPropertyCasingTypo(node.value, propertyName);
       },
 
       MemberExpression: function(node) {
@@ -130,9 +192,10 @@ module.exports = {
 
         if (
           relatedComponent &&
-          (utils.isES6Component(relatedComponent.node) || utils.isReturningJSX(relatedComponent.node))
+          (utils.isES6Component(relatedComponent.node) || utils.isReturningJSX(relatedComponent.node)) &&
+          (node.parent && node.parent.type === 'AssignmentExpression' && node.parent.right)
         ) {
-          reportErrorIfClassPropertyCasingTypo(node, propertyName);
+          reportErrorIfClassPropertyCasingTypo(node.parent.right, propertyName);
         }
       },
 

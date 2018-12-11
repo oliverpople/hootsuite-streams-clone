@@ -5,6 +5,7 @@
 'use strict';
 
 const variableUtil = require('../util/variable');
+const docsUrl = require('../util/docsUrl');
 
 // ------------------------------------------------------------------------------
 // Rule Definition
@@ -14,7 +15,8 @@ module.exports = {
     docs: {
       description: 'Report when a DOM element is using both children and dangerouslySetInnerHTML',
       category: '',
-      recommended: true
+      recommended: true,
+      url: docsUrl('no-danger-with-children')
     },
     schema: [] // no options
   },
@@ -27,17 +29,21 @@ module.exports = {
      * @param {object} node - ObjectExpression node
      * @param {string} propName - name of the prop to look for
      */
-    function findObjectProp(node, propName) {
+    function findObjectProp(node, propName, seenProps) {
       if (!node.properties) {
         return false;
       }
       return node.properties.find(prop => {
         if (prop.type === 'Property') {
           return prop.key.name === propName;
-        } else if (prop.type === 'ExperimentalSpreadProperty') {
+        } else if (prop.type === 'ExperimentalSpreadProperty' || prop.type === 'SpreadElement') {
           const variable = findSpreadVariable(prop.argument.name);
           if (variable && variable.defs.length && variable.defs[0].node.init) {
-            return findObjectProp(variable.defs[0].node.init, propName);
+            if (seenProps.indexOf(prop.argument.name) > -1) {
+              return false;
+            }
+            const newSeenProps = seenProps.concat(prop.argument.name || []);
+            return findObjectProp(variable.defs[0].node.init, propName, newSeenProps);
           }
         }
         return false;
@@ -55,7 +61,7 @@ module.exports = {
         if (attribute.type === 'JSXSpreadAttribute') {
           const variable = findSpreadVariable(attribute.argument.name);
           if (variable && variable.defs.length && variable.defs[0].node.init) {
-            return findObjectProp(variable.defs[0].node.init, propName);
+            return findObjectProp(variable.defs[0].node.init, propName, []);
           }
         }
         return attribute.name && attribute.name.name === propName;
@@ -68,7 +74,7 @@ module.exports = {
      * @returns {Boolean} True if node is a line break, false if not
      */
     function isLineBreak(node) {
-      const isLiteral = node.type === 'Literal';
+      const isLiteral = node.type === 'Literal' || node.type === 'JSXText';
       const isMultiline = node.loc.start.line !== node.loc.end.line;
       const isWhiteSpaces = /^\s*$/.test(node.value);
 
@@ -111,10 +117,10 @@ module.exports = {
             }
           }
 
-          const dangerously = findObjectProp(props, 'dangerouslySetInnerHTML');
+          const dangerously = findObjectProp(props, 'dangerouslySetInnerHTML', []);
 
           if (node.arguments.length === 2) {
-            if (findObjectProp(props, 'children')) {
+            if (findObjectProp(props, 'children', [])) {
               hasChildren = true;
             }
           } else {

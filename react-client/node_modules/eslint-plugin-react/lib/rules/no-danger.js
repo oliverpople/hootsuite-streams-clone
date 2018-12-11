@@ -4,6 +4,9 @@
  */
 'use strict';
 
+const docsUrl = require('../util/docsUrl');
+const jsxUtil = require('../util/jsx');
+
 // ------------------------------------------------------------------------------
 // Constants
 // ------------------------------------------------------------------------------
@@ -24,16 +27,6 @@ const DANGEROUS_PROPERTIES = DANGEROUS_PROPERTY_NAMES.reduce((props, prop) => {
 // ------------------------------------------------------------------------------
 
 /**
- * Checks if a node name match the JSX tag convention.
- * @param {String} name - Name of the node to check.
- * @returns {boolean} Whether or not the node name match the JSX tag convention.
- */
-const tagConvention = /^[a-z]|\-/;
-function isTagName(name) {
-  return tagConvention.test(name);
-}
-
-/**
  * Checks if a JSX attribute is dangerous.
  * @param {String} name - Name of the attribute to check.
  * @returns {boolean} Whether or not the attribute is dnagerous.
@@ -51,7 +44,8 @@ module.exports = {
     docs: {
       description: 'Prevent usage of dangerous JSX props',
       category: 'Best Practices',
-      recommended: false
+      recommended: false,
+      url: docsUrl('no-danger')
     },
     schema: []
   },
@@ -60,7 +54,7 @@ module.exports = {
     return {
 
       JSXAttribute: function(node) {
-        if (isTagName(node.parent.name.name) && isDangerous(node.name.name)) {
+        if (jsxUtil.isDOMComponent(node.parent) && isDangerous(node.name.name)) {
           context.report({
             node: node,
             message: DANGEROUS_MESSAGE,

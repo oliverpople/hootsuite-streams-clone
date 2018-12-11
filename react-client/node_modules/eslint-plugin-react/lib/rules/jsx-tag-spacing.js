@@ -4,8 +4,8 @@
  */
 'use strict';
 
-const has = require('has');
 const getTokenBeforeClosingBracket = require('../util/getTokenBeforeClosingBracket');
+const docsUrl = require('../util/docsUrl');
 
 // ------------------------------------------------------------------------------
 // Validators
@@ -168,13 +168,71 @@ function validateAfterOpening(context, node, option) {
   }
 }
 
+function validateBeforeClosing(context, node, option) {
+  // Don't enforce this rule for self closing tags
+  if (!node.selfClosing) {
+    const sourceCode = context.getSourceCode();
+
+    const NEVER_MESSAGE = 'A space is forbidden before closing bracket';
+    const ALWAYS_MESSAGE = 'Whitespace is required before closing bracket';
+
+    const lastTokens = sourceCode.getLastTokens(node, 2);
+    const closingToken = lastTokens[1];
+    const leftToken = lastTokens[0];
+
+    if (leftToken.loc.start.line !== closingToken.loc.start.line) {
+      return;
+    }
+
+    const adjacent = !sourceCode.isSpaceBetweenTokens(leftToken, closingToken);
+
+    if (option === 'never' && !adjacent) {
+      context.report({
+        node: node,
+        loc: {
+          start: leftToken.loc.end,
+          end: closingToken.loc.start
+        },
+        message: NEVER_MESSAGE,
+        fix: function(fixer) {
+          return fixer.removeRange([leftToken.range[1], closingToken.range[0]]);
+        }
+      });
+    } else if (option === 'always' && adjacent) {
+      context.report({
+        node: node,
+        loc: {
+          start: leftToken.loc.end,
+          end: closingToken.loc.start
+        },
+        message: ALWAYS_MESSAGE,
+        fix: function(fixer) {
+          return fixer.insertTextBefore(closingToken, ' ');
+        }
+      });
+    }
+  }
+}
+
 // ------------------------------------------------------------------------------
 // Rule Definition
 // ------------------------------------------------------------------------------
 
+const optionDefaults = {
+  closingSlash: 'never',
+  beforeSelfClosing: 'always',
+  afterOpening: 'never',
+  beforeClosing: 'allow'
+};
+
 module.exports = {
   meta: {
-    docs: {},
+    docs: {
+      description: 'Validate whitespace in and around the JSX opening and closing brackets',
+      category: 'Stylistic Issues',
+      recommended: false,
+      url: docsUrl('jsx-tag-spacing')
+    },
     fixable: 'whitespace',
     schema: [
       {
@@ -188,28 +246,18 @@ module.exports = {
           },
           afterOpening: {
             enum: ['always', 'allow-multiline', 'never', 'allow']
+          },
+          beforeClosing: {
+            enum: ['always', 'never', 'allow']
           }
         },
-        default: {
-          closingSlash: 'never',
-          beforeSelfClosing: 'always',
-          afterOpening: 'never'
-        },
+        default: optionDefaults,
         additionalProperties: false
       }
     ]
   },
   create: function (context) {
-    const options = {
-      closingSlash: 'never',
-      beforeSelfClosing: 'always',
-      afterOpening: 'never'
-    };
-    for (const key in options) {
-      if (has(options, key) && has(context.options[0] || {}, key)) {
-        options[key] = context.options[0][key];
-      }
-    }
+    const options = Object.assign({}, optionDefaults, context.options[0]);
 
     return {
       JSXOpeningElement: function (node) {
@@ -222,6 +270,9 @@ module.exports = {
         if (options.beforeSelfClosing !== 'allow' && node.selfClosing) {
           validateBeforeSelfClosing(context, node, options.beforeSelfClosing);
         }
+        if (options.beforeClosing !== 'allow') {
+          validateBeforeClosing(context, node, options.beforeClosing);
+        }
       },
       JSXClosingElement: function (node) {
         if (options.afterOpening !== 'allow') {
@@ -229,6 +280,9 @@ module.exports = {
         }
         if (options.closingSlash !== 'allow') {
           validateClosingSlash(context, node, options.closingSlash);
+        }
+        if (options.beforeClosing !== 'allow') {
+          validateBeforeClosing(context, node, options.beforeClosing);
         }
       }
     };

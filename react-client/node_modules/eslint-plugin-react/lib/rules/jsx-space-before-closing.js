@@ -6,6 +6,9 @@
 'use strict';
 
 const getTokenBeforeClosingBracket = require('../util/getTokenBeforeClosingBracket');
+const docsUrl = require('../util/docsUrl');
+const log = require('../util/log');
+
 let isWarnedForDeprecation = false;
 
 // ------------------------------------------------------------------------------
@@ -18,7 +21,8 @@ module.exports = {
     docs: {
       description: 'Validate spacing before closing bracket in JSX',
       category: 'Stylistic Issues',
-      recommended: false
+      recommended: false,
+      url: docsUrl('jsx-space-before-closing')
     },
     fixable: 'code',
 
@@ -72,15 +76,13 @@ module.exports = {
       },
 
       Program: function() {
-        if (isWarnedForDeprecation || /\=-(f|-format)=/.test(process.argv.join('='))) {
+        if (isWarnedForDeprecation) {
           return;
         }
 
-        /* eslint-disable no-console */
-        console.log('The react/jsx-space-before-closing rule is deprecated. ' +
-                    'Please use the react/jsx-tag-spacing rule with the ' +
-                    '"beforeSelfClosing" option instead.');
-        /* eslint-enable no-console */
+        log('The react/jsx-space-before-closing rule is deprecated. ' +
+            'Please use the react/jsx-tag-spacing rule with the ' +
+            '"beforeSelfClosing" option instead.');
         isWarnedForDeprecation = true;
       }
     };

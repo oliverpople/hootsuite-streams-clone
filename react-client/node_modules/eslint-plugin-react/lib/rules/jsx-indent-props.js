@@ -29,6 +29,9 @@
  */
 'use strict';
 
+const astUtil = require('../util/ast');
+const docsUrl = require('../util/docsUrl');
+
 // ------------------------------------------------------------------------------
 // Rule Definition
 // ------------------------------------------------------------------------------
@@ -37,13 +40,14 @@ module.exports = {
     docs: {
       description: 'Validate props indentation in JSX',
       category: 'Stylistic Issues',
-      recommended: false
+      recommended: false,
+      url: docsUrl('jsx-indent-props')
     },
     fixable: 'code',
 
     schema: [{
       oneOf: [{
-        enum: ['tab']
+        enum: ['tab', 'first']
       }, {
         type: 'integer'
       }]
@@ -60,7 +64,10 @@ module.exports = {
     const sourceCode = context.getSourceCode();
 
     if (context.options.length) {
-      if (context.options[0] === 'tab') {
+      if (context.options[0] === 'first') {
+        indentSize = 'first';
+        indentType = 'space';
+      } else if (context.options[0] === 'tab') {
         indentSize = 1;
         indentType = 'tab';
       } else if (typeof context.options[0] === 'number') {
@@ -74,9 +81,8 @@ module.exports = {
      * @param {ASTNode} node Node violating the indent rule
      * @param {Number} needed Expected indentation character count
      * @param {Number} gotten Indentation character count in the actual node/code
-     * @param {Object=} loc Error line and column location
      */
-    function report(node, needed, gotten, loc) {
+    function report(node, needed, gotten) {
       const msgContext = {
         needed: needed,
         type: indentType,
@@ -84,70 +90,36 @@ module.exports = {
         gotten: gotten
       };
 
-      if (loc) {
-        context.report({
-          node: node,
-          loc: loc,
-          message: MESSAGE,
-          data: msgContext
-        });
-      } else {
-        context.report({
-          node: node,
-          message: MESSAGE,
-          data: msgContext,
-          fix: function(fixer) {
-            return fixer.replaceTextRange([node.start - node.loc.start.column, node.start],
-              Array(needed + 1).join(indentType === 'space' ? ' ' : '\t'));
-          }
-        });
-      }
+      context.report({
+        node: node,
+        message: MESSAGE,
+        data: msgContext,
+        fix: function(fixer) {
+          return fixer.replaceTextRange([node.range[0] - node.loc.start.column, node.range[0]],
+            Array(needed + 1).join(indentType === 'space' ? ' ' : '\t'));
+        }
+      });
     }
 
     /**
      * Get node indent
      * @param {ASTNode} node Node to examine
-     * @param {Boolean} byLastLine get indent of node's last line
-     * @param {Boolean} excludeCommas skip comma on start of line
      * @return {Number} Indent
      */
-    function getNodeIndent(node, byLastLine, excludeCommas) {
-      byLastLine = byLastLine || false;
-      excludeCommas = excludeCommas || false;
-
+    function getNodeIndent(node) {
       let src = sourceCode.getText(node, node.loc.start.column + extraColumnStart);
       const lines = src.split('\n');
-      if (byLastLine) {
-        src = lines[lines.length - 1];
-      } else {
-        src = lines[0];
-      }
-
-      const skip = excludeCommas ? ',' : '';
+      src = lines[0];
 
       let regExp;
       if (indentType === 'space') {
-        regExp = new RegExp(`^[ ${skip}]+`);
+        regExp = /^[ ]+/;
       } else {
-        regExp = new RegExp(`^[\t${skip}]+`);
+        regExp = /^[\t]+/;
       }
 
       const indent = regExp.exec(src);
       return indent ? indent[0].length : 0;
-    }
-
-    /**
-     * Checks node is the first in its own start line. By default it looks by start line.
-     * @param {ASTNode} node The node to check
-     * @param {Boolean} [byEndLocation] Lookup based on start position or end
-     * @return {Boolean} true if its the first in the its start line
-     */
-    function isNodeFirstInLine(node, byEndLocation) {
-      const firstToken = byEndLocation === true ? sourceCode.getLastToken(node, 1) : sourceCode.getTokenBefore(node);
-      const startLine = byEndLocation === true ? node.loc.end.line : node.loc.start.line;
-      const endLine = firstToken ? firstToken.loc.end.line : -1;
-
-      return startLine !== endLine;
     }
 
     /**
@@ -156,12 +128,12 @@ module.exports = {
      * @param {Number} indent needed indent
      * @param {Boolean} excludeCommas skip comma on start of line
      */
-    function checkNodesIndent(nodes, indent, excludeCommas) {
+    function checkNodesIndent(nodes, indent) {
       nodes.forEach(node => {
-        const nodeIndent = getNodeIndent(node, false, excludeCommas);
+        const nodeIndent = getNodeIndent(node);
         if (
           node.type !== 'ArrayExpression' && node.type !== 'ObjectExpression' &&
-          nodeIndent !== indent && isNodeFirstInLine(node)
+          nodeIndent !== indent && astUtil.isNodeFirstInLine(context, node)
         ) {
           report(node, indent, nodeIndent);
         }
@@ -170,8 +142,18 @@ module.exports = {
 
     return {
       JSXOpeningElement: function(node) {
-        const elementIndent = getNodeIndent(node);
-        checkNodesIndent(node.attributes, elementIndent + indentSize);
+        if (!node.attributes.length) {
+          return;
+        }
+        let propIndent;
+        if (indentSize === 'first') {
+          const firstPropNode = node.attributes[0];
+          propIndent = firstPropNode.loc.start.column;
+        } else {
+          const elementIndent = getNodeIndent(node);
+          propIndent = elementIndent + indentSize;
+        }
+        checkNodesIndent(node.attributes, propIndent);
       }
     };
   }
